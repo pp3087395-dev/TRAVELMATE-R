@@ -1,19 +1,40 @@
 import React from 'react';
-import { Shield, QrCode, Globe, AlertTriangle, CheckCircle, BellRing, Sun, Moon } from 'lucide-react';
+import { Shield, QrCode, Globe, AlertTriangle, CheckCircle, BellRing, Sun, Moon, Menu } from 'lucide-react';
 import { useTraveler } from '../../context/TravelerContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useSidebar } from '../../context/SidebarContext';
 import { Link } from 'react-router-dom';
 import StatusBadge from './StatusBadge';
 
 export default function Header({ onOpenQR, onOpenLang }) {
   const { traveler, journey } = useTraveler();
   const { isDark, toggleTheme } = useTheme();
+  const { toggleMobile, toggleCollapse } = useSidebar();
+
+  const handleSidebarToggle = () => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      toggleMobile();
+    } else {
+      toggleCollapse();
+    }
+  };
 
   return (
     <header className="sticky top-0 z-30 w-full glass-panel border-b border-surface-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Brand */}
-        <Link to="/" className="flex items-center space-x-3 group">
+        {/* Left: Hamburger & Brand */}
+        <div className="flex items-center space-x-3">
+          <button
+            id="btn-sidebar-hamburger-toggle"
+            onClick={handleSidebarToggle}
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors"
+            title="Toggle Navigation Menu"
+            aria-label="Toggle Navigation Menu"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+
+          <Link to="/" className="flex items-center space-x-2.5 group">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-indigo-600 flex items-center justify-center p-2 shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
             <Shield className="w-6 h-6 text-white" />
           </div>
@@ -31,6 +52,7 @@ export default function Header({ onOpenQR, onOpenLang }) {
             </p>
           </div>
         </Link>
+      </div>
 
         {/* Center / Active SafeVisit Pass Pill */}
         <div className="hidden md:flex items-center space-x-3 bg-surface-card px-3 py-1.5 rounded-full border border-surface-border">

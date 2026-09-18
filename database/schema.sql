@@ -131,8 +131,33 @@ CREATE TABLE IF NOT EXISTS safety_zones (
     last_updated DATE DEFAULT CURRENT_DATE
 );
 
+-- 9. JOURNEY_CHAINS (Immutable-style sequential cryptographic transit ledger)
+CREATE TABLE IF NOT EXISTS journey_chains (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    traveler_id UUID NOT NULL REFERENCES travelers(id) ON DELETE CASCADE,
+    journey_id UUID REFERENCES journeys(id) ON DELETE SET NULL,
+    sequence_index INTEGER NOT NULL,
+    source VARCHAR(255) NOT NULL,
+    destination VARCHAR(255) NOT NULL,
+    fare NUMERIC(10,2) NOT NULL,
+    vehicle_type VARCHAR(50) NOT NULL, -- 'auto', 'taxi_ac', 'taxi_non_ac', 'metro', 'bus'
+    distance_km DOUBLE PRECISION NOT NULL,
+    departure_time TIMESTAMPTZ NOT NULL,
+    arrival_time TIMESTAMPTZ NOT NULL,
+    time_taken INTEGER NOT NULL, -- duration in minutes
+    previous_hash VARCHAR(64) NOT NULL,
+    current_hash VARCHAR(64) NOT NULL,
+    status VARCHAR(50) DEFAULT 'confirmed',
+    verification_badge VARCHAR(100) DEFAULT 'Cryptographically Verified',
+    metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT unique_traveler_chain_seq UNIQUE (traveler_id, sequence_index)
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_journeys_code ON journeys(journey_code);
 CREATE INDEX IF NOT EXISTS idx_places_key ON places(place_key);
 CREATE INDEX IF NOT EXISTS idx_incidents_status ON incidents(status);
 CREATE INDEX IF NOT EXISTS idx_evidence_journey ON evidence_vault(journey_id);
+CREATE INDEX IF NOT EXISTS idx_journey_chains_traveler ON journey_chains(traveler_id);
+CREATE INDEX IF NOT EXISTS idx_journey_chains_hash ON journey_chains(current_hash);

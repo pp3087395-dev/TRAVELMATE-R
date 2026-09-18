@@ -1,28 +1,28 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  QrCode,
-  MapPin,
-  CalendarDays,
-  Globe,
-  Calculator,
+  Home,
+  User,
+  Link2,
   Navigation,
-  Camera,
+  Globe,
+  MapPin,
   AlertCircle,
-  LayoutDashboard,
+  Settings,
+  Calculator,
 } from 'lucide-react';
 
 export default function Navbar() {
   const navItems = [
-    { to: '/', label: 'Safe Pass', icon: QrCode },
-    { to: '/discover', label: 'Verified Places', icon: MapPin },
-    { to: '/planner', label: 'Trip Planner', icon: CalendarDays },
-    { to: '/phrase-helper', label: 'Phrase Helper', icon: Globe },
+    { to: '/', label: 'Home', icon: Home },
+    { to: '/portal', label: 'User Portal', icon: User },
+    { to: '/journey-chain', label: 'Journey Chain', icon: Link2 },
+    { to: '/safe-journey', label: 'Live Track', icon: Navigation },
+    { to: '/phrase-helper', label: 'Bhashini AI', icon: Globe },
+    { to: '/discover', label: 'Monuments', icon: MapPin },
     { to: '/fare-meter', label: 'Fair Fare', icon: Calculator },
-    { to: '/safe-journey', label: 'Safe Track', icon: Navigation },
-    { to: '/vault', label: 'RideSafe Vault', icon: Camera },
-    { to: '/incident', label: 'Incident Report', icon: AlertCircle },
-    { to: '/admin', label: 'Admin Portal', icon: LayoutDashboard },
+    { to: '/emergency', label: 'SOS 112', icon: AlertCircle },
+    { to: '/settings', label: 'Settings', icon: Settings },
   ];
 
   return (

@@ -3,6 +3,7 @@ const { Pool } = require('pg');
 const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const config = require('./env');
 
 // Seeded 10 Delhi places (strictly aligned with Delhi ASI / official tourism sources)
@@ -371,16 +372,136 @@ const INITIAL_SAFETY_ZONES = [
   }
 ];
 
+// Cryptographic Hash Function for Sequential Journey Chains
+function calculateChainHash(node) {
+  const payload = `${node.sequence_index}|${node.traveler_id}|${node.source}|${node.destination}|${Number(node.fare).toFixed(2)}|${node.departure_time}|${node.arrival_time}|${node.distance_km}|${node.previous_hash}`;
+  return crypto.createHash('sha256').update(payload).digest('hex');
+}
+
+const DEMO_TRAVELER_ID = 'trv-default-sarah';
+const DEMO_JOURNEY_CODE = 'TM-DEL-2026-X89K';
+const GENESIS_PREV_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
+
+const seedNode0 = {
+  id: 'jc-node-00-genesis',
+  traveler_id: DEMO_TRAVELER_ID,
+  journey_id: 'journey-default-x89k',
+  sequence_index: 0,
+  source: 'Indira Gandhi International Airport (Terminal 3)',
+  destination: 'Connaught Place (Inner Circle)',
+  fare: 420.00,
+  vehicle_type: 'taxi_ac',
+  distance_km: 16.4,
+  departure_time: '2026-09-17T09:30:00.000Z',
+  arrival_time: '2026-09-17T10:08:00.000Z',
+  time_taken: 38,
+  previous_hash: GENESIS_PREV_HASH,
+  status: 'confirmed',
+  verification_badge: 'Prepaid Airport Taxi Voucher #DL-IGI-9821',
+  created_at: '2026-09-17T10:08:05.000Z'
+};
+seedNode0.current_hash = calculateChainHash(seedNode0);
+
+const seedNode1 = {
+  id: 'jc-node-01-cp-redfort',
+  traveler_id: DEMO_TRAVELER_ID,
+  journey_id: 'journey-default-x89k',
+  sequence_index: 1,
+  source: 'Connaught Place',
+  destination: 'Red Fort (Lal Qila - Lahori Gate)',
+  fare: 85.00,
+  vehicle_type: 'auto',
+  distance_km: 4.8,
+  departure_time: '2026-09-17T11:15:00.000Z',
+  arrival_time: '2026-09-17T11:33:00.000Z',
+  time_taken: 18,
+  previous_hash: seedNode0.current_hash,
+  status: 'confirmed',
+  verification_badge: 'Delhi Gazette Fare Checked (100% Fair)',
+  created_at: '2026-09-17T11:33:10.000Z'
+};
+seedNode1.current_hash = calculateChainHash(seedNode1);
+
+const seedNode2 = {
+  id: 'jc-node-02-redfort-humayun',
+  traveler_id: DEMO_TRAVELER_ID,
+  journey_id: 'journey-default-x89k',
+  sequence_index: 2,
+  source: 'Red Fort',
+  destination: "Humayun's Tomb (Mathura Road)",
+  fare: 145.00,
+  vehicle_type: 'taxi_non_ac',
+  distance_km: 8.2,
+  departure_time: '2026-09-17T15:00:00.000Z',
+  arrival_time: '2026-09-17T15:26:00.000Z',
+  time_taken: 26,
+  previous_hash: seedNode1.current_hash,
+  status: 'confirmed',
+  verification_badge: 'ASI Official Gate Verified',
+  created_at: '2026-09-17T15:26:15.000Z'
+};
+seedNode2.current_hash = calculateChainHash(seedNode2);
+
+const seedNode3 = {
+  id: 'jc-node-03-humayun-indiagate',
+  traveler_id: DEMO_TRAVELER_ID,
+  journey_id: 'journey-default-x89k',
+  sequence_index: 3,
+  source: "Humayun's Tomb",
+  destination: 'India Gate & Kartavya Path',
+  fare: 65.00,
+  vehicle_type: 'auto',
+  distance_km: 3.6,
+  departure_time: '2026-09-17T17:45:00.000Z',
+  arrival_time: '2026-09-17T17:58:00.000Z',
+  time_taken: 13,
+  previous_hash: seedNode2.current_hash,
+  status: 'confirmed',
+  verification_badge: 'SafeTransit Night Corridor Verified',
+  created_at: '2026-09-17T17:58:20.000Z'
+};
+seedNode3.current_hash = calculateChainHash(seedNode3);
+
+const INITIAL_JOURNEY_CHAINS = [seedNode0, seedNode1, seedNode2, seedNode3];
+
 // Unified In-Memory Fallback Store (Always kept in sync)
 const store = {
-  travelers: [],
-  journeys: [],
+  travelers: [
+    {
+      id: DEMO_TRAVELER_ID,
+      temp_id: 'TRV-X89K',
+      name: 'Sarah Jenkins',
+      nationality: 'United Kingdom',
+      preferred_language: 'en',
+      emergency_contact: '+44 7700 900077',
+      opt_in_location: true,
+      created_at: '2026-09-17T09:00:00.000Z',
+      expires_at: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString()
+    }
+  ],
+  journeys: [
+    {
+      id: 'journey-default-x89k',
+      traveler_id: DEMO_TRAVELER_ID,
+      journey_code: DEMO_JOURNEY_CODE,
+      status: 'active',
+      current_lat: 28.6139,
+      current_lng: 77.2090,
+      last_location_update: new Date().toISOString(),
+      active_route: {},
+      visited_places: ['pl-red-fort-01', 'pl-humayun-tomb-03'],
+      checkin_history: [],
+      start_time: '2026-09-17T09:00:00.000Z',
+      expires_at: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString()
+    }
+  ],
   places: [...INITIAL_PLACES],
   fare_estimates: [],
   evidence_vault: [],
   incidents: [],
   place_reviews: [],
-  safety_zones: [...INITIAL_SAFETY_ZONES]
+  safety_zones: [...INITIAL_SAFETY_ZONES],
+  journey_chains: [...INITIAL_JOURNEY_CHAINS]
 };
 
 // Database State
@@ -1043,6 +1164,159 @@ const db = {
       }
       store.fare_estimates.push(estimate);
       return estimate;
+    }
+  },
+
+  // 6b. JOURNEY CHAINS (Cryptographic Sequential Ledger)
+  journeyChains: {
+    async findByTraveler(travelerIdOrCode) {
+      let targetTravelerId = travelerIdOrCode;
+      const matchedJourney = store.journeys.find(j => j.journey_code === travelerIdOrCode || j.id === travelerIdOrCode);
+      if (matchedJourney) {
+        targetTravelerId = matchedJourney.traveler_id;
+      } else {
+        const matchedTraveler = store.travelers.find(t => t.temp_id === travelerIdOrCode || t.id === travelerIdOrCode);
+        if (matchedTraveler) targetTravelerId = matchedTraveler.id;
+      }
+
+      if (isPostgresConnected && pool) {
+        try {
+          const res = await pool.query(
+            `SELECT * FROM journey_chains WHERE traveler_id = $1 ORDER BY sequence_index ASC;`,
+            [targetTravelerId]
+          );
+          if (res.rows.length > 0) {
+            return res.rows.map(r => ({
+              ...r,
+              fare: parseFloat(r.fare),
+              distance_km: parseFloat(r.distance_km),
+              time_taken: parseInt(r.time_taken, 10),
+              metadata: typeof r.metadata === 'string' ? JSON.parse(r.metadata) : (r.metadata || {})
+            }));
+          }
+        } catch (e) {
+          console.error('[DB DAL] journeyChains.findByTraveler error:', e.message);
+        }
+      }
+
+      // Filter in-memory
+      const inMem = store.journey_chains
+        .filter(node => node.traveler_id === targetTravelerId || node.traveler_id === DEMO_TRAVELER_ID)
+        .sort((a, b) => a.sequence_index - b.sequence_index);
+
+      return inMem.length > 0 ? inMem : store.journey_chains;
+    },
+
+    async appendNode(nodeData) {
+      const {
+        traveler_id = DEMO_TRAVELER_ID,
+        journey_id = 'journey-default-x89k',
+        source,
+        destination,
+        fare,
+        vehicle_type = 'auto',
+        distance_km = 5.0,
+        departure_time = new Date(Date.now() - 25 * 60 * 1000).toISOString(),
+        arrival_time = new Date().toISOString(),
+        time_taken = 25,
+        verification_badge = 'Verified Transit Hop',
+        metadata = {}
+      } = nodeData;
+
+      const existingChain = await this.findByTraveler(traveler_id);
+      const sequence_index = existingChain.length;
+      const previous_hash = sequence_index > 0
+        ? existingChain[sequence_index - 1].current_hash
+        : GENESIS_PREV_HASH;
+
+      const id = uuidv4();
+      const nodeToHash = {
+        id,
+        traveler_id,
+        journey_id,
+        sequence_index,
+        source: source.trim(),
+        destination: destination.trim(),
+        fare: parseFloat(fare),
+        vehicle_type,
+        distance_km: parseFloat(distance_km),
+        departure_time,
+        arrival_time,
+        time_taken: parseInt(time_taken, 10),
+        previous_hash,
+        status: 'confirmed',
+        verification_badge,
+        metadata,
+        created_at: new Date().toISOString()
+      };
+
+      nodeToHash.current_hash = calculateChainHash(nodeToHash);
+
+      if (isPostgresConnected && pool) {
+        try {
+          await pool.query(
+            `INSERT INTO journey_chains (id, traveler_id, journey_id, sequence_index, source, destination, fare, vehicle_type, distance_km, departure_time, arrival_time, time_taken, previous_hash, current_hash, status, verification_badge, metadata, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18);`,
+            [
+              nodeToHash.id,
+              nodeToHash.traveler_id,
+              nodeToHash.journey_id,
+              nodeToHash.sequence_index,
+              nodeToHash.source,
+              nodeToHash.destination,
+              nodeToHash.fare,
+              nodeToHash.vehicle_type,
+              nodeToHash.distance_km,
+              nodeToHash.departure_time,
+              nodeToHash.arrival_time,
+              nodeToHash.time_taken,
+              nodeToHash.previous_hash,
+              nodeToHash.current_hash,
+              nodeToHash.status,
+              nodeToHash.verification_badge,
+              JSON.stringify(nodeToHash.metadata),
+              nodeToHash.created_at
+            ]
+          );
+        } catch (e) {
+          console.error('[DB DAL] journeyChains.appendNode error:', e.message);
+        }
+      }
+
+      store.journey_chains.push(nodeToHash);
+      return nodeToHash;
+    },
+
+    async verifyChain(travelerIdOrCode) {
+      const chain = await this.findByTraveler(travelerIdOrCode);
+      const tamperedNodes = [];
+
+      for (let i = 0; i < chain.length; i++) {
+        const node = chain[i];
+        if (i === 0) {
+          if (node.previous_hash !== GENESIS_PREV_HASH) {
+            tamperedNodes.push({ sequence_index: i, reason: 'Genesis previous hash mismatch', node_id: node.id });
+          }
+        } else {
+          if (node.previous_hash !== chain[i - 1].current_hash) {
+            tamperedNodes.push({ sequence_index: i, reason: 'Previous hash does not match prior node hash', node_id: node.id });
+          }
+        }
+
+        const recalculated = calculateChainHash(node);
+        if (recalculated !== node.current_hash) {
+          tamperedNodes.push({ sequence_index: i, reason: 'Current hash cryptographic mismatch (content altered)', node_id: node.id });
+        }
+      }
+
+      return {
+        is_valid: tamperedNodes.length === 0,
+        total_nodes: chain.length,
+        tampered_count: tamperedNodes.length,
+        tampered_nodes: tamperedNodes,
+        verified_at: new Date().toISOString(),
+        audit_verdict: tamperedNodes.length === 0 ? 'Cryptographically Verified - 0 Tampering Detected' : 'Warning: Ledger Integrity Compromised'
+      };
     }
   },
 

@@ -18,6 +18,23 @@
  * 4. Once provided, this service will automatically toggle from Mock mode to Live Bhashini mode!
  */
 
+import { API_BASE } from './api';
+
+export const BHASHINI_LANGUAGES = [
+  { code: 'hi', name: 'Hindi', native: 'हिन्दी', tts: true },
+  { code: 'bn', name: 'Bengali', native: 'বাংলা', tts: true },
+  { code: 'ta', name: 'Tamil', native: 'தமிழ்', tts: true },
+  { code: 'te', name: 'Telugu', native: 'తెలుగు', tts: true },
+  { code: 'mr', name: 'Marathi', native: 'मराठी', tts: true },
+  { code: 'gu', name: 'Gujarati', native: 'ગુજરાતી', tts: true },
+  { code: 'kn', name: 'Kannada', native: 'ಕನ್ನಡ', tts: true },
+  { code: 'ml', name: 'Malayalam', native: 'മലയാളം', tts: true },
+  { code: 'pa', name: 'Punjabi', native: 'ਪੰਜਾਬੀ', tts: true },
+  { code: 'or', name: 'Odia', native: 'ଓଡ଼ିଆ', tts: true },
+  { code: 'as', name: 'Assamese', native: 'অসমীয়া', tts: true },
+  { code: 'ur', name: 'Urdu', native: 'اردو', tts: true }
+];
+
 export const BHASHINI_CONFIG = {
   USER_ID: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BHASHINI_USER_ID) || '',
   API_KEY: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BHASHINI_API_KEY) || '',
@@ -242,8 +259,45 @@ export async function translateText({ text, sourceLang = 'en', targetLang = 'hi'
   const cleanText = text.trim();
 
   // ---------------------------------------------------------------------------
-  // 1. LIVE BHASHINI API INTEGRATION PIPELINE
-  // When API_KEY is provided in .env, this live block is executed.
+  // 0. BACKEND BHASHINI PROXY ENDPOINT
+  // Communicates with backend /api/bhashini/translate for server-managed credentials
+  // ---------------------------------------------------------------------------
+  try {
+    const backendRes = await fetch(`${API_BASE}/bhashini/translate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: cleanText,
+        source_lang: sourceLang,
+        target_lang: targetLang
+      })
+    });
+    if (backendRes.ok) {
+      const backendData = await backendRes.json();
+      if (backendData.success && backendData.translated_text) {
+        return {
+          original: cleanText,
+          translated: backendData.translated_text,
+          hindi: targetLang === 'hi' ? backendData.translated_text : cleanText,
+          english: targetLang === 'en' ? backendData.translated_text : cleanText,
+          transliteration: backendData.transliteration || generateTransliteration(backendData.translated_text),
+          phonetic: backendData.phonetic_guide || generatePhoneticGuide(backendData.translated_text),
+          sourceLang,
+          targetLang,
+          source: backendData.source || 'Digital India Bhashini AI Engine',
+          isLive: Boolean(backendData.is_live),
+          confidence: 0.98,
+          timestamp: backendData.timestamp || new Date().toISOString()
+        };
+      }
+    }
+  } catch (err) {
+    // Graceful fallback to client-side pipeline
+  }
+
+  // ---------------------------------------------------------------------------
+  // 1. DIRECT CLIENT-SIDE BHASHINI API INTEGRATION PIPELINE
+  // When API_KEY is provided in frontend .env, this direct block is executed.
   // ---------------------------------------------------------------------------
   if (!BHASHINI_CONFIG.USE_MOCK && BHASHINI_CONFIG.API_KEY) {
     try {

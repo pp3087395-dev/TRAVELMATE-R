@@ -8,11 +8,13 @@ const { store, db, initDatabase } = require('./config/db');
 
 // Route imports
 const journeyRoutes = require('./routes/journeys');
+const journeyChainRoutes = require('./routes/journeyChains');
 const placesRoutes = require('./routes/places');
 const fareRoutes = require('./routes/fare');
 const emergencyRoutes = require('./routes/emergency');
 const incidentRoutes = require('./routes/incidents');
 const adminRoutes = require('./routes/admin');
+const bhashiniRoutes = require('./routes/bhashini');
 
 const app = express();
 
@@ -81,12 +83,14 @@ app.get('/api/config/maps', (req, res) => {
 });
 
 // Mount Routes
+app.use('/api/journeys/chain', journeyChainRoutes);
 app.use('/api/journeys', journeyRoutes);
 app.use('/api/places', placesRoutes);
 app.use('/api/fare', fareRoutes);
 app.use('/api/emergency', emergencyRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/bhashini', bhashiniRoutes);
 
 // Global Error Handler
 app.use(errorHandler);

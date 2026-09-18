@@ -212,6 +212,56 @@ async function runEndToEndVerification() {
     if (!res.success || !res.data.detected_plate) throw new Error('OCR failed');
   });
 
+  // 20. Journey Chain Cryptographic Ledger
+  await check('Module #2: Journey Chain Cryptographic Ledger (Block Minting & Hash Linking)', async () => {
+    // 1. Get initial chain
+    const chainRes = await fetch('http://localhost:5000/api/journeys/chain/trv-default-sarah').then(r => r.json());
+    if (!chainRes.success || !Array.isArray(chainRes.data) || chainRes.count < 1) throw new Error('Failed to fetch chain');
+
+    // 2. Add new hop
+    const addRes = await fetch('http://localhost:5000/api/journeys/chain/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        traveler_id: 'trv-default-sarah',
+        source: 'India Gate',
+        destination: 'Lotus Temple',
+        fare: 120.00,
+        vehicle_type: 'auto',
+        distance_km: 9.1,
+        time_taken: 28
+      })
+    }).then(r => r.json());
+    if (!addRes.success || !addRes.data.current_hash || !addRes.data.previous_hash) throw new Error('Add node failed');
+
+    // 3. Verify audit integrity
+    const auditRes = await fetch('http://localhost:5000/api/journeys/chain/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier: 'trv-default-sarah' })
+    }).then(r => r.json());
+    if (!auditRes.success || !auditRes.data.is_valid) throw new Error('Chain cryptographic audit failed');
+  });
+
+  // 21. Bhashini Vernacular Translation Service
+  await check('Module #4: Digital India Bhashini Vernacular Translation Service', async () => {
+    // 1. Get languages
+    const langRes = await fetch('http://localhost:5000/api/bhashini/languages').then(r => r.json());
+    if (!langRes.success || langRes.languages.length < 10) throw new Error('Failed to fetch Bhashini languages');
+
+    // 2. Translate query
+    const transRes = await fetch('http://localhost:5000/api/bhashini/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: 'Please use the meter',
+        source_lang: 'en',
+        target_lang: 'hi'
+      })
+    }).then(r => r.json());
+    if (!transRes.success || !transRes.translated_text || !transRes.transliteration) throw new Error('Translation failed');
+  });
+
   console.log('\n===============================================================');
   console.log(` RESULTS: ${passed} PASSED / ${failed} FAILED `);
   console.log('===============================================================');

@@ -528,6 +528,39 @@ export const api = {
       console.warn('[API Fallback] Local maps config fallback:', e.message);
     }
     return '';
+  },
+
+  // 14. Journey Chain (Cryptographic Sequential Ledger)
+  async getJourneyChain(identifier = 'trv-default-sarah') {
+    try {
+      const res = await fetch(`${API_BASE}/journeys/chain/${identifier}`);
+      if (res.ok) return await res.json();
+    } catch (_) {}
+    return { success: false, data: [] };
+  },
+
+  async addChainNode(nodeData) {
+    try {
+      const res = await fetch(`${API_BASE}/journeys/chain/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nodeData)
+      });
+      if (res.ok) return await res.json();
+    } catch (_) {}
+    return { success: false };
+  },
+
+  async verifyChain(identifier = 'trv-default-sarah') {
+    try {
+      const res = await fetch(`${API_BASE}/journeys/chain/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier })
+      });
+      if (res.ok) return await res.json();
+    } catch (_) {}
+    return { success: false };
   }
 };
 
