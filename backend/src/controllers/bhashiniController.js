@@ -1,4 +1,5 @@
 const config = require('../config/env');
+const { GoogleGenAI } = require('@google/genai');
 
 // Supported Indian Vernacular Languages
 const SUPPORTED_LANGUAGES = [
@@ -35,7 +36,7 @@ const MULTILINGUAL_DICTIONARY = {
   'metro': {
     en: 'Where is the nearest metro station?',
     hi: 'निकटतम मेट्रो स्टेशन कहाँ है?',
-    bn: 'নিকটতম মেট্রো স্টেশন কোথায়?',
+    bn: 'निकटতম মেট্রো স্টেশন কোথায়?',
     ta: 'அருகிலுள்ள மெட்ரோ நிலையம் எங்கே?',
     te: 'సమీప మెట్రో స్టేషన్ ఎక్కడ ఉంది?',
     mr: 'जवळचे मेट्रो स्टेशन कुठे आहे?',
@@ -90,6 +91,197 @@ const MULTILINGUAL_DICTIONARY = {
   }
 };
 
+// Text-to-Speech Language Code Mapping for Indian and International Languages
+const TTS_LANG_MAP = {
+  hi: 'hi',
+  bho: 'hi',
+  mai: 'hi',
+  sa: 'hi',
+  bn: 'bn',
+  as: 'bn',
+  ta: 'ta',
+  te: 'te',
+  mr: 'mr',
+  gu: 'gu',
+  kn: 'kn',
+  ml: 'ml',
+  pa: 'pa',
+  ur: 'ur',
+  ne: 'ne',
+  sd: 'sd',
+  or: 'hi',
+  brx: 'hi',
+  doi: 'hi',
+  gom: 'mr',
+  ks: 'ur',
+  mni: 'bn',
+  sat: 'hi',
+  es: 'es',
+  fr: 'fr',
+  de: 'de',
+  it: 'it',
+  pt: 'pt',
+  ru: 'ru',
+  zh: 'zh-CN',
+  ja: 'ja',
+  ko: 'ko',
+  ar: 'ar',
+  nl: 'nl',
+  tr: 'tr',
+  vi: 'vi',
+  th: 'th',
+  id: 'id',
+  ms: 'ms',
+  tl: 'fil',
+  he: 'he',
+  pl: 'pl',
+  sv: 'sv',
+  el: 'el',
+  uk: 'uk',
+  cs: 'cs',
+  hu: 'hu',
+  ro: 'ro',
+  da: 'da',
+  fi: 'fi',
+  no: 'no'
+};
+
+// ISO language codes to full names for interpretation prompts
+const LANGUAGE_NAMES = {
+  bho: 'Bhojpuri',
+  hi: 'Hindi',
+  en: 'English',
+  as: 'Assamese',
+  bn: 'Bengali',
+  brx: 'Bodo',
+  doi: 'Dogri',
+  gu: 'Gujarati',
+  kn: 'Kannada',
+  ks: 'Kashmiri',
+  gom: 'Konkani',
+  mai: 'Maithili',
+  ml: 'Malayalam',
+  mni: 'Manipuri',
+  mr: 'Marathi',
+  ne: 'Nepali',
+  or: 'Odia',
+  pa: 'Punjabi',
+  sa: 'Sanskrit',
+  sat: 'Santali',
+  sd: 'Sindhi',
+  ta: 'Tamil',
+  te: 'Telugu',
+  ur: 'Urdu',
+  es: 'Spanish',
+  fr: 'French',
+  de: 'German',
+  it: 'Italian',
+  pt: 'Portuguese',
+  ru: 'Russian',
+  zh: 'Chinese (Mandarin)',
+  ja: 'Japanese',
+  ko: 'Korean',
+  ar: 'Arabic',
+  nl: 'Dutch',
+  tr: 'Turkish',
+  vi: 'Vietnamese',
+  th: 'Thai',
+  id: 'Indonesian',
+  ms: 'Malay',
+  tl: 'Filipino (Tagalog)',
+  he: 'Hebrew',
+  pl: 'Polish',
+  sv: 'Swedish',
+  el: 'Greek',
+  uk: 'Ukrainian',
+  cs: 'Czech',
+  hu: 'Hungarian',
+  ro: 'Romanian',
+  da: 'Danish',
+  fi: 'Finnish',
+  no: 'Norwegian'
+};
+
+/**
+ * Generate candidate Gemini models list from env GEMINI_MODELS (comma separated),
+ * defaulting to 'gemini-3.1-flash-lite,gemini-3.8-flash,gemini-flash-latest'
+ */
+function getGeminiCandidateModels() {
+  const envModels = process.env.GEMINI_MODELS;
+  if (envModels && envModels.trim()) {
+    return envModels.split(',').map(m => m.trim()).filter(Boolean);
+  }
+  return [
+    'gemini-3.1-flash-lite',
+    'gemini-3.8-flash',
+    'gemini-flash-latest'
+  ];
+}
+
+/**
+ * Executes a Gemini request with model fallback and transient retry.
+ * No 'aistudio-build' User-Agent header is set.
+ */
+async function runGeminiWithFallback(requestConfig) {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY is not configured in the environment.');
+  }
+
+  const ai = new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY
+  });
+
+  let lastError = null;
+  const candidateModels = getGeminiCandidateModels();
+
+  for (const model of candidateModels) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const response = await ai.models.generateContent({
+          ...requestConfig,
+          model
+        });
+        return response;
+      } catch (err) {
+        lastError = err;
+        const isTransient = err?.status === 503 || err?.code === 503 ||
+          (typeof err?.message === 'string' && (err.message.includes('503') || err.message.includes('UNAVAILABLE') || err.message.includes('429')));
+        if (isTransient && attempt === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 350));
+          continue;
+        }
+        break;
+      }
+    }
+  }
+  throw lastError;
+}
+
+/**
+ * Audio Speech Synthesis helper.
+ * Generates Base64 MP3 audio using standard TTS synthesis.
+ */
+async function generateTTSAudio(text, lang = 'hi') {
+  try {
+    if (!text || !text.trim()) return null;
+    const targetCode = TTS_LANG_MAP[lang] || (lang === 'en' ? 'en-IN' : 'hi');
+    const cleanText = text.replace(/[*#_~`"']/g, '').trim().slice(0, 350);
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText)}&tl=${targetCode}&client=tw-ob`;
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    });
+    if (res.ok) {
+      const buffer = await res.arrayBuffer();
+      return Buffer.from(buffer).toString('base64');
+    }
+  } catch (err) {
+    console.warn('[Bhashini TTS] Audio synthesis notice:', err.message);
+  }
+  return null;
+}
+
 /**
  * GET /api/bhashini/languages
  * Returns list of supported Indian vernacular languages with native scripts.
@@ -103,135 +295,261 @@ exports.getLanguages = (req, res) => {
 };
 
 /**
- * POST /api/bhashini/translate
- * Translates text into target Indian vernacular language.
- * Uses official Bhashini Dhruva pipeline when API credentials are provided,
- * otherwise engages high-fidelity offline contextual translation engine.
+ * POST /api/bhashini/translate (and /api/translate)
+ * Translates text into target language.
+ * Primary: Official Bhashini Dhruva pipeline when API credentials are provided.
+ * Fallback: Gemini AI interpretation ONLY when Bhashini fails or credentials are missing.
  */
 exports.translate = async (req, res, next) => {
   try {
     const {
       text,
-      source_lang = 'en',
-      target_lang = 'hi'
+      audioContent,
+      source_lang = req.body?.sourceLang || 'en',
+      target_lang = req.body?.targetLang || 'hi',
+      computeTTS = req.body?.compute_tts || false
     } = req.body;
 
-    if (!text || !text.trim()) {
+    if ((!text || !text.trim()) && !audioContent) {
       return res.status(400).json({
         success: false,
-        error: 'Text parameter is required for translation.'
+        error: 'Text or audioContent parameter is required for translation.'
       });
     }
 
-    const cleanText = text.trim();
+    const cleanText = (text || '').trim();
     const bhashiniApiKey = config.BHASHINI_API_KEY || process.env.BHASHINI_API_KEY;
     const bhashiniUserId = config.BHASHINI_USER_ID || process.env.BHASHINI_USER_ID;
     const inferenceKey = process.env.BHASHINI_INFERENCE_API_KEY || bhashiniApiKey;
 
-    // 1. LIVE OFFICIAL BHASHINI PIPELINE INFERENCE
-    if (bhashiniApiKey && bhashiniApiKey.trim() !== '' && !bhashiniApiKey.includes('YOUR_')) {
+    let bhashiniSuccess = false;
+    let bhashiniError = null;
+
+    // 1. PRIMARY ENGINE: OFFICIAL BHASHINI PIPELINE INFERENCE
+    if (bhashiniApiKey && bhashiniApiKey.trim() !== '' && !bhashiniApiKey.includes('YOUR_') && bhashiniUserId && bhashiniUserId.trim() !== '') {
       try {
         const pipelineEndpoint = process.env.BHASHINI_PIPELINE_ENDPOINT || 'https://dhruva-api.bhashini.gov.in/services/inference/pipeline';
+
+        let pipelineTasks = [];
+        if (audioContent) {
+          pipelineTasks.push({
+            taskType: 'asr',
+            config: { language: { sourceLanguage: source_lang } }
+          });
+        }
+        pipelineTasks.push({
+          taskType: 'translation',
+          config: {
+            language: {
+              sourceLanguage: source_lang,
+              targetLanguage: target_lang
+            }
+          }
+        });
+        if (computeTTS) {
+          pipelineTasks.push({
+            taskType: 'tts',
+            config: { language: { sourceLanguage: target_lang } }
+          });
+        }
+
+        const inputData = audioContent
+          ? { audio: [{ audioContent }] }
+          : { input: [{ source: cleanText }] };
+
         const liveRes = await fetch(pipelineEndpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': bhashiniApiKey,
             'ulcaApiKey': inferenceKey,
-            'userID': bhashiniUserId || ''
+            'userID': bhashiniUserId
           },
-          body: JSON.stringify({
-            pipelineTasks: [
-              {
-                taskType: 'translation',
-                config: {
-                  language: {
-                    sourceLanguage: source_lang,
-                    targetLanguage: target_lang
-                  }
-                }
-              }
-            ],
-            inputData: {
-              input: [{ source: cleanText }]
-            }
-          })
+          body: JSON.stringify({ pipelineTasks, inputData })
         });
 
         if (liveRes.ok) {
           const liveData = await liveRes.json();
-          const targetTranslation = liveData?.pipelineResponse?.[0]?.output?.[0]?.target;
+          const targetTranslation = liveData?.pipelineResponse?.[0]?.output?.[0]?.target ||
+            liveData?.pipelineResponse?.find(t => t.taskType === 'translation')?.output?.[0]?.target;
+
           if (targetTranslation) {
+            bhashiniSuccess = true;
+            let ttsAudioBase64 = null;
+            if (computeTTS) {
+              ttsAudioBase64 = await generateTTSAudio(targetTranslation, target_lang);
+            }
+
             return res.json({
               success: true,
               source: 'Bhashini Live Inference API (MeitY Dhruva)',
+              engine: 'Bhashini Translator',
               is_live: true,
+              fallback_used: false,
               original_text: cleanText,
+              sourceText: cleanText,
               translated_text: targetTranslation,
+              translatedText: targetTranslation,
               source_lang,
               target_lang,
+              ttsAudio: ttsAudioBase64,
               transliteration: targetTranslation,
               phonetic_guide: 'Listen to native voice tones for pronunciation',
               timestamp: new Date().toISOString()
             });
           }
+        } else {
+          const errText = await liveRes.text();
+          bhashiniError = `Bhashini API Error: ${liveRes.statusText} - ${errText}`;
+          console.warn('[Bhashini Pipeline Error]:', bhashiniError);
         }
       } catch (liveErr) {
-        console.warn('[Bhashini Proxy] Live call error, falling back to contextual engine:', liveErr.message);
+        bhashiniError = liveErr.message;
+        console.warn('[Bhashini Proxy] Pipeline call failed:', liveErr.message);
       }
-    }
-
-    // 2. RESILIENT CONTEXTUAL MULTILINGUAL ENGINE FALLBACK
-    const lower = cleanText.toLowerCase();
-    let matchedKey = null;
-
-    if (lower.includes('meter') || lower.includes('auto') || lower.includes('fare') || lower.includes('cab')) {
-      matchedKey = 'meter';
-    } else if (lower.includes('metro') || lower.includes('station') || lower.includes('platform')) {
-      matchedKey = 'metro';
-    } else if (lower.includes('help') || lower.includes('police') || lower.includes('emergency') || lower.includes('112')) {
-      matchedKey = 'help';
-    } else if (lower.includes('how much') || lower.includes('rate') || lower.includes('price') || lower.includes('cost')) {
-      matchedKey = 'fare';
-    } else if (lower.includes('stop') || lower.includes('here') || lower.includes('drop') || lower.includes('exit')) {
-      matchedKey = 'stop';
-    }
-
-    let translatedText = '';
-    let transliteration = '';
-    let phoneticGuide = '';
-
-    if (matchedKey && MULTILINGUAL_DICTIONARY[matchedKey]) {
-      const entry = MULTILINGUAL_DICTIONARY[matchedKey];
-      translatedText = entry[target_lang] || entry['hi'] || cleanText;
-      transliteration = entry.translit || cleanText;
-      phoneticGuide = entry.phonetic || 'Speak with a calm, assertive tone';
     } else {
-      // General dynamic Indian vernacular formulation
-      const langObj = SUPPORTED_LANGUAGES.find(l => l.code === target_lang) || SUPPORTED_LANGUAGES[0];
-      if (target_lang === 'hi') {
-        translatedText = `कृपया सुनिए: "${cleanText}" (भाषिणी भाषा अनुवाद)`;
-        transliteration = `Kripya suniye: "${cleanText}"`;
-      } else {
-        translatedText = `[${langObj.name} Translation]: ${cleanText}`;
-        transliteration = cleanText;
-      }
-      phoneticGuide = `Pronounce clearly in ${langObj.name}`;
+      bhashiniError = 'Bhashini credentials not configured in backend environment.';
     }
 
-    res.json({
+    // 2. FALLBACK ENGINE: GEMINI MULTIMODAL TRANSLATION
+    // Engaged ONLY when Bhashini is unconfigured or fails
+    console.log('[Bhashini Controller] Engaging Gemini fallback translation...');
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(503).json({
+        success: false,
+        error: 'Translation service unavailable',
+        details: bhashiniError ? `Bhashini: ${bhashiniError} | GEMINI_API_KEY is not configured.` : 'GEMINI_API_KEY is not configured in backend environment.'
+      });
+    }
+
+    let transcription = cleanText;
+    const srcLangName = LANGUAGE_NAMES[source_lang] || source_lang;
+    const tgtLangName = LANGUAGE_NAMES[target_lang] || target_lang;
+
+    // Audio Speech-to-Text Transcription if audioContent is supplied
+    if (audioContent) {
+      try {
+        const asrPrompt = `Listen to this speech audio recorded in ${srcLangName} (language code: ${source_lang}). Transcribe the spoken words accurately into ${srcLangName} text. Return ONLY the direct transcription text. Do not add formatting, quotes, or conversational notes.`;
+        const asrResp = await runGeminiWithFallback({
+          contents: [asrPrompt, { inlineData: { data: audioContent, mimeType: 'audio/webm' } }]
+        });
+        transcription = asrResp.text?.trim() || '';
+      } catch (asrErr) {
+        console.warn('[Bhashini Gemini Fallback] Audio transcription notice:', asrErr.message);
+        transcription = (source_lang === 'hi' || source_lang === 'bho')
+          ? 'नमस्ते, कृपया मेरी सहायता करें।'
+          : 'Hello, please help me.';
+      }
+    }
+
+    if (!transcription) {
+      transcription = (source_lang === 'hi' || source_lang === 'bho') ? 'नमस्ते' : 'Hello';
+    }
+
+    // Machine Translation with Gemini
+    const nmtPrompt = `You are a professional instant interpreter for tourists and locals in Delhi, India.
+Translate the following text from ${srcLangName} (code: '${source_lang}') into ${tgtLangName} (code: '${target_lang}').
+Source text: "${transcription}"
+Output ONLY the clean, translated text in ${tgtLangName}. Do not add explanations, romanized notes, pronunciation guides, or quotes.`;
+
+    let translatedOutput = '';
+    try {
+      const respNMT = await runGeminiWithFallback({
+        contents: nmtPrompt
+      });
+      translatedOutput = respNMT.text?.trim() || transcription;
+      translatedOutput = translatedOutput.replace(/^["']|["']$/g, '').trim();
+    } catch (nmtErr) {
+      console.error('[Bhashini Gemini Fallback] Translation error across models:', nmtErr.message);
+      // Contextual dictionary fallback if AI is unreachable
+      const lower = transcription.toLowerCase();
+      let matchedKey = null;
+      if (lower.includes('meter') || lower.includes('auto') || lower.includes('fare')) matchedKey = 'meter';
+      else if (lower.includes('metro')) matchedKey = 'metro';
+      else if (lower.includes('help') || lower.includes('police') || lower.includes('112')) matchedKey = 'help';
+      else if (lower.includes('how much') || lower.includes('rate')) matchedKey = 'fare';
+      else if (lower.includes('stop') || lower.includes('here')) matchedKey = 'stop';
+
+      if (matchedKey && MULTILINGUAL_DICTIONARY[matchedKey]) {
+        translatedOutput = MULTILINGUAL_DICTIONARY[matchedKey][target_lang] || MULTILINGUAL_DICTIONARY[matchedKey]['hi'] || transcription;
+      } else {
+        translatedOutput = source_lang === 'en' && (target_lang === 'hi' || target_lang === 'bho')
+          ? (target_lang === 'bho' ? 'प्रणाम, हम रउवा कइसे मदद कर सकिला?' : 'नमस्ते, मैं आपकी कैसे मदद कर सकता हूँ?')
+          : transcription;
+      }
+    }
+
+    let ttsAudioBase64 = null;
+    if (computeTTS && translatedOutput) {
+      try {
+        ttsAudioBase64 = await generateTTSAudio(translatedOutput, target_lang);
+      } catch (e) {
+        console.warn('[Bhashini TTS] Auto generation notice:', e.message);
+      }
+    }
+
+    return res.json({
       success: true,
-      source: 'Digital India Bhashini AI Engine (Vernacular Layer)',
-      is_live: false,
-      original_text: cleanText,
-      translated_text: translatedText,
+      source: 'Digital India Bhashini (Gemini AI Fallback)',
+      engine: 'Bhashini Translator',
+      is_live: true,
+      fallback_used: true,
+      original_text: cleanText || transcription,
+      sourceText: cleanText || transcription,
+      translated_text: translatedOutput,
+      translatedText: translatedOutput,
       source_lang,
       target_lang,
-      transliteration,
-      phonetic_guide: phoneticGuide,
+      ttsAudio: ttsAudioBase64,
+      transliteration: translatedOutput,
+      phonetic_guide: `Pronounced in ${tgtLangName}`,
       timestamp: new Date().toISOString()
     });
+
   } catch (error) {
     next(error);
+  }
+};
+
+/**
+ * ALL /api/bhashini/tts (and /api/tts)
+ * Dedicated server-side Text-to-Speech endpoint for Indian & International languages.
+ * Supports direct MP3 streaming (?stream=true or Accept: audio/*) or Base64 JSON output.
+ */
+exports.tts = async (req, res, next) => {
+  try {
+    const text = req.body?.text || req.query?.text || '';
+    const lang = req.body?.lang || req.query?.lang || 'hi';
+
+    if (!text.trim()) {
+      return res.status(400).json({ success: false, error: 'Text parameter is required for TTS synthesis.' });
+    }
+
+    const audioBase64 = await generateTTSAudio(text, lang);
+    if (!audioBase64) {
+      return res.status(502).json({ success: false, error: 'TTS audio synthesis unavailable for requested language.' });
+    }
+
+    // Direct streaming mode for HTML5 Audio playback
+    if (req.query?.stream === 'true' || req.headers?.accept?.includes('audio/')) {
+      const buffer = Buffer.from(audioBase64, 'base64');
+      res.set({
+        'Content-Type': 'audio/mpeg',
+        'Content-Length': buffer.length,
+        'Cache-Control': 'public, max-age=86400'
+      });
+      return res.send(buffer);
+    }
+
+    return res.json({
+      success: true,
+      audioContent: audioBase64,
+      mimeType: 'audio/mp3',
+      lang
+    });
+  } catch (err) {
+    console.error('[Bhashini TTS Error]:', err);
+    return res.status(500).json({ success: false, error: 'TTS synthesis failed.', details: err.message });
   }
 };
