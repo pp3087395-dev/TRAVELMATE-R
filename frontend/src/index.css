@@ -761,6 +761,30 @@ html.light .bg-black\/40 * {
   background: #475569;
 }
 
+/* Bhashini Custom Dark-Theme Dropdown Scrollbar */
+.bhashini-dropdown-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 #0B1220;
+}
+
+.bhashini-dropdown-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.bhashini-dropdown-scrollbar::-webkit-scrollbar-track {
+  background: #0B1220;
+  border-radius: 8px;
+}
+
+.bhashini-dropdown-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 8px;
+}
+
+.bhashini-dropdown-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
 /* Radar pulse animation for live GPS */
 @keyframes radar-pulse {
   0% {

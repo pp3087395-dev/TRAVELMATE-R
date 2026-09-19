@@ -23,6 +23,7 @@ import {
   PRELOADED_TOURIST_PHRASES
 } from '../../services/bhashiniService';
 import { useToast } from '../../context/ToastContext';
+import BhashiniLanguageDropdown from './BhashiniLanguageDropdown';
 
 export default function FloatingBhashiniWidget({
   isOpen: externalIsOpen,
@@ -272,31 +273,17 @@ export default function FloatingBhashiniWidget({
 
                 <ArrowRightLeft className="w-3.5 h-3.5 text-amber-400 shrink-0" />
 
-                <select
+                <BhashiniLanguageDropdown
                   id="select-target-language"
-                  value={targetLanguage}
-                  onChange={(e) => {
-                    const newTarget = e.target.value;
+                  selectedLanguage={targetLanguage}
+                  onSelectLanguage={(newTarget) => {
                     updateTargetLanguage(newTarget);
                     if (inputText.trim()) triggerTranslation(inputText, newTarget);
                   }}
-                  className="bg-transparent text-amber-300 font-bold focus:outline-none cursor-pointer text-xs"
-                >
-                  <optgroup label="Major Indian Languages" className="bg-slate-900 text-amber-400 font-bold">
-                    {MAJOR_INDIAN_LANGUAGES.map((lang) => (
-                      <option key={lang.code} value={lang.code} className="bg-slate-900 text-white font-medium">
-                        {lang.name} ({lang.native})
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Other Regional Languages" className="bg-slate-900 text-slate-400 font-normal italic">
-                    {BHASHINI_LANGUAGES.filter(l => !MAJOR_INDIAN_LANGUAGES.some(m => m.code === l.code)).map((lang) => (
-                      <option key={lang.code} value={lang.code} className="bg-slate-900 text-slate-300 not-italic">
-                        {lang.name} ({lang.native})
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
+                  theme="amber"
+                  showSearch={true}
+                  align="right"
+                />
               </div>
 
               {/* Text Input with Microphone */}

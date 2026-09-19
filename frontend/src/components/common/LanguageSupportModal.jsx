@@ -26,6 +26,7 @@ import {
   MAJOR_INDIAN_LANGUAGES,
   PRELOADED_TOURIST_PHRASES,
 } from '../../services/bhashiniService';
+import BhashiniLanguageDropdown from '../bhashini/BhashiniLanguageDropdown';
 
 export default function LanguageSupportModal({ isOpen, onClose }) {
   const { traveler } = useTraveler();
@@ -211,19 +212,15 @@ export default function LanguageSupportModal({ isOpen, onClose }) {
             </button>
           </div>
 
-          <div className="flex gap-2">
-            <select
+          <div className="flex items-center gap-2">
+            <BhashiniLanguageDropdown
               id="modal-select-target-language"
-              value={targetLanguage}
-              onChange={(e) => setTargetLanguage(e.target.value)}
-              className="px-2.5 py-2 bg-surface border border-surface-border rounded-xl text-xs font-bold text-indigo-300 focus:outline-none focus:border-indigo-500 shrink-0 cursor-pointer"
-            >
-              {MAJOR_INDIAN_LANGUAGES.map((lang) => (
-                <option key={lang.code} value={lang.code} className="bg-surface text-slate-100 font-semibold">
-                  {lang.name} ({lang.native})
-                </option>
-              ))}
-            </select>
+              selectedLanguage={targetLanguage}
+              onSelectLanguage={(newTarget) => setTargetLanguage(newTarget)}
+              theme="indigo"
+              showSearch={false}
+              align="left"
+            />
             <input
               type="text"
               placeholder="Type any custom sentence (e.g. 'How much to Qutub Minar by meter?')..."

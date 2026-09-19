@@ -33,6 +33,7 @@ import {
   MAJOR_INDIAN_LANGUAGES,
 } from '../services/bhashiniService';
 import StatusBadge from '../components/common/StatusBadge';
+import BhashiniLanguageDropdown from '../components/bhashini/BhashiniLanguageDropdown';
 import { useTraveler } from '../context/TravelerContext';
 
 export default function PhraseHelperPage() {
@@ -475,24 +476,19 @@ export default function PhraseHelperPage() {
             >
               <ArrowRightLeft className="w-3.5 h-3.5" />
             </button>
-            <select
+            <BhashiniLanguageDropdown
               id="phrase-target-language-select"
-              value={targetLanguage}
-              onChange={(e) => {
-                const newTarget = e.target.value;
+              selectedLanguage={targetLanguage}
+              onSelectLanguage={(newTarget) => {
                 updateTargetLanguage(newTarget);
                 if (inputText.trim()) {
                   handleTranslate(inputText, sourceLang, newTarget);
                 }
               }}
-              className="px-3 py-1.5 text-xs font-bold text-indigo-400 bg-indigo-500/10 rounded-xl border border-indigo-500/20 focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer"
-            >
-              {MAJOR_INDIAN_LANGUAGES.map((lang) => (
-                <option key={lang.code} value={lang.code} className="bg-surface text-slate-100 font-semibold">
-                  {lang.name} ({lang.native})
-                </option>
-              ))}
-            </select>
+              theme="indigo"
+              showSearch={true}
+              align="right"
+            />
           </div>
         </div>
 

@@ -37,6 +37,7 @@ import {
   MAJOR_INDIAN_LANGUAGES,
 } from '../services/bhashiniService';
 import StatusBadge from '../components/common/StatusBadge';
+import BhashiniLanguageDropdown from '../components/bhashini/BhashiniLanguageDropdown';
 import { useTraveler } from '../context/TravelerContext';
 // Journey chain fallback helper when standalone
 const useJourneyChain = () => {
@@ -644,40 +645,19 @@ export default function BhashiniTranslatorPage() {
             >
               <ArrowRightLeft className="w-3.5 h-3.5" />
             </button>
-            <select
+            <BhashiniLanguageDropdown
               id="select-target-language"
-              value={targetLanguage}
-              onChange={(e) => {
-                const newTarget = e.target.value;
+              selectedLanguage={targetLanguage}
+              onSelectLanguage={(newTarget) => {
                 updateTargetLanguage(newTarget);
                 if (inputText.trim()) {
                   handleTranslate(inputText, sourceLang, newTarget);
                 }
               }}
-              className="px-3 py-1.5 text-xs font-bold text-indigo-400 bg-indigo-500/10 rounded-xl border border-indigo-500/20 focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer"
-            >
-              <optgroup label="Major Indian Languages" className="bg-surface text-amber-400 font-bold not-italic">
-                {MAJOR_INDIAN_LANGUAGES.map(lang => (
-                  <option key={lang.code} value={lang.code} className="bg-surface text-slate-100 not-italic font-semibold">
-                    {lang.name} ({lang.native})
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Other Regional Languages" className="bg-surface text-slate-400 font-normal italic">
-                {BHASHINI_LANGUAGES.filter(l => !MAJOR_INDIAN_LANGUAGES.some(m => m.code === l.code)).map(lang => (
-                  <option key={lang.code} value={lang.code} className="bg-surface text-slate-200 not-italic font-medium">
-                    {lang.name} {lang.native && lang.native !== lang.name ? `• ${lang.native}` : ''}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="International Languages" className="bg-surface text-slate-400 font-normal italic">
-                {INTERNATIONAL_LANGUAGES.map(lang => (
-                  <option key={lang.code} value={lang.code} className="bg-surface text-slate-200 not-italic font-medium">
-                    {lang.name} {lang.native && lang.native !== lang.name ? `• ${lang.native}` : ''}
-                  </option>
-                ))}
-              </optgroup>
-            </select>
+              theme="indigo"
+              showSearch={true}
+              align="right"
+            />
           </div>
         </div>
 
@@ -1020,34 +1000,14 @@ export default function BhashiniTranslatorPage() {
               <h3 className="text-sm font-bold text-slate-200">Local Side</h3>
               <div className="flex items-center justify-center space-x-1.5 text-xs text-slate-400">
                 <span className="shrink-0">Speaks:</span>
-                <select
+                <BhashiniLanguageDropdown
                   id="live-local-lang-select"
-                  value={targetLanguage}
-                  onChange={(e) => updateTargetLanguage(e.target.value)}
-                  className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 rounded-lg px-2.5 py-1 text-xs font-semibold focus:outline-none focus:border-emerald-400 cursor-pointer max-w-[210px] truncate"
-                >
-                  <optgroup label="Major Indian Languages" className="bg-surface text-amber-400 font-bold not-italic">
-                    {MAJOR_INDIAN_LANGUAGES.map(l => (
-                      <option key={l.code} value={l.code} className="bg-surface text-slate-100 not-italic font-semibold">
-                        {l.name} ({l.native})
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Other Regional Languages" className="bg-surface text-slate-400 italic">
-                    {BHASHINI_LANGUAGES.filter(l => !MAJOR_INDIAN_LANGUAGES.some(m => m.code === l.code)).map(l => (
-                      <option key={l.code} value={l.code} className="bg-surface text-slate-200 not-italic">
-                        {l.name} {l.native && l.native !== l.name ? `• ${l.native}` : ''}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="International Languages" className="bg-surface text-slate-400 italic">
-                    {INTERNATIONAL_LANGUAGES.map(l => (
-                      <option key={l.code} value={l.code} className="bg-surface text-slate-200 not-italic">
-                        {l.name} {l.native && l.native !== l.name ? `• ${l.native}` : ''}
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
+                  selectedLanguage={targetLanguage}
+                  onSelectLanguage={(newTarget) => updateTargetLanguage(newTarget)}
+                  theme="emerald"
+                  showSearch={true}
+                  align="left"
+                />
               </div>
             </div>
 
