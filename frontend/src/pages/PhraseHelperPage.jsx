@@ -449,11 +449,16 @@ export default function PhraseHelperPage() {
               <Radio className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-white font-display">
-                Interactive Text & Speech-to-Speech Translator
-              </h2>
+              <div className="flex items-center space-x-2">
+                <h2 className="text-base sm:text-lg font-bold text-white font-display">
+                  Interactive Text & Speech-to-Speech Translator
+                </h2>
+                <span className="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 font-mono font-bold text-xs border border-indigo-500/30 uppercase">
+                  {targetLanguage}
+                </span>
+              </div>
               <p className="text-xs text-slate-400">
-                Type or speak aloud. Voice inputs are automatically transcribed, translated, and spoken back.
+                Target: <strong className="text-amber-300 font-semibold">{(MAJOR_INDIAN_LANGUAGES.find(l => l.code === targetLanguage)?.name) || targetLanguage} ({(MAJOR_INDIAN_LANGUAGES.find(l => l.code === targetLanguage)?.native) || targetLanguage.toUpperCase()})</strong> • Type or speak aloud. Voice inputs are automatically transcribed, translated, and spoken back.
               </p>
             </div>
           </div>
@@ -578,7 +583,12 @@ export default function PhraseHelperPage() {
           {/* Column 2: Translated Output Panel */}
           <div className="space-y-4">
             <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
-              <span>{targetLang === 'hi' ? 'Hindi Translation' : 'English Translation'}</span>
+              <span className="flex items-center space-x-1.5">
+                <span>{(MAJOR_INDIAN_LANGUAGES.find(l => l.code === targetLanguage)?.name) || targetLanguage} Translation</span>
+                <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase">
+                  {targetLanguage}
+                </span>
+              </span>
               {translationResult && (
                 <span className="text-[10px] text-emerald-400 font-mono">
                   {Math.round(translationResult.confidence * 100)}% Confidence
@@ -602,7 +612,7 @@ export default function PhraseHelperPage() {
                       {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                     </button>
                     <button
-                      onClick={() => handlePlayAudio(translationResult.translated, targetLang)}
+                      onClick={() => handlePlayAudio(translationResult.translated, targetLanguage)}
                       className={`p-1.5 rounded-lg transition-colors ${
                         isPlayingAudio
                           ? 'text-emerald-300 bg-emerald-500/20 animate-pulse'

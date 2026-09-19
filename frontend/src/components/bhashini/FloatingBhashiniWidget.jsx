@@ -19,6 +19,7 @@ import {
   playAudioSpeech,
   stopAudioSpeech,
   BHASHINI_LANGUAGES,
+  MAJOR_INDIAN_LANGUAGES,
   PRELOADED_TOURIST_PHRASES
 } from '../../services/bhashiniService';
 import { useToast } from '../../context/ToastContext';
@@ -26,7 +27,9 @@ import { useToast } from '../../context/ToastContext';
 export default function FloatingBhashiniWidget({
   isOpen: externalIsOpen,
   onClose: externalOnClose,
-  hideLauncher = false
+  hideLauncher = false,
+  targetLanguage: externalTargetLanguage,
+  onTargetLanguageChange
 } = {}) {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
@@ -42,7 +45,18 @@ export default function FloatingBhashiniWidget({
   };
   const [inputText, setInputText] = useState('');
   const [sourceLang, setSourceLang] = useState('en');
-  const [targetLang, setTargetLang] = useState('hi');
+  
+  // Dynamic targetLanguage state (supports both controlled and uncontrolled usage)
+  const [internalTargetLanguage, setInternalTargetLanguage] = useState('hi');
+  const targetLanguage = externalTargetLanguage !== undefined ? externalTargetLanguage : internalTargetLanguage;
+  const targetLang = targetLanguage; // backward compatibility alias
+
+  const updateTargetLanguage = (code) => {
+    if (onTargetLanguageChange) {
+      onTargetLanguageChange(code);
+    }
+    setInternalTargetLanguage(code);
+  };
   const [translationResult, setTranslationResult] = useState(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -105,16 +119,18 @@ export default function FloatingBhashiniWidget({
     }
   };
 
-  const triggerTranslation = async (textToTranslate) => {
+  const triggerTranslation = async (textToTranslate, langOverride) => {
     const text = textToTranslate || inputText;
     if (!text.trim()) return;
+    const resolvedTarget = langOverride || targetLanguage;
 
     setIsTranslating(true);
     try {
       const result = await translateText({
         text,
         sourceLang,
-        targetLang
+        targetLanguage: resolvedTarget,
+        targetLang: resolvedTarget
       });
       setTranslationResult(result);
     } catch (e) {
@@ -131,7 +147,7 @@ export default function FloatingBhashiniWidget({
       setIsPlayingAudio(false);
     } else {
       setIsPlayingAudio(true);
-      playAudioSpeech(text, targetLang);
+      playAudioSpeech(text, targetLanguage);
       setTimeout(() => setIsPlayingAudio(false), 3000);
     }
   };
@@ -148,7 +164,10 @@ export default function FloatingBhashiniWidget({
     triggerTranslation(phrase.english);
   };
 
-  const activeTargetLangObj = BHASHINI_LANGUAGES.find((l) => l.code === targetLang) || BHASHINI_LANGUAGES[0];
+  const activeTargetLangObj =
+    MAJOR_INDIAN_LANGUAGES.find((l) => l.code === targetLanguage) ||
+    BHASHINI_LANGUAGES.find((l) => l.code === targetLanguage) ||
+    MAJOR_INDIAN_LANGUAGES[0];
 
   return (
     <>
@@ -166,8 +185,8 @@ export default function FloatingBhashiniWidget({
             <span className="font-display tracking-tight font-extrabold hidden sm:inline whitespace-nowrap">
               Bhashini AI
             </span>
-            <span className="px-1.5 py-0.5 rounded-md bg-slate-950/20 text-[10px] font-mono font-black text-slate-950 shrink-0">
-              {activeTargetLangObj.code.toUpperCase()}
+            <span className="px-1.5 py-0.5 rounded-md bg-slate-950/20 text-[10px] font-mono font-black text-slate-950 shrink-0 uppercase">
+              {targetLanguage}
             </span>
           </button>
         </div>
@@ -198,12 +217,15 @@ export default function FloatingBhashiniWidget({
                 <div>
                   <div className="text-xs font-black font-display text-white tracking-wide flex items-center space-x-1.5">
                     <span>BHASHINI TRANSLATOR</span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase">
+                      {targetLanguage}
+                    </span>
                     <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300">
                       MeitY
                     </span>
                   </div>
                   <div className="text-[10px] text-slate-400">
-                    Indian Vernacular Translation Layer
+                    Target: <span className="text-amber-300 font-semibold">{activeTargetLangObj.name} ({activeTargetLangObj.native})</span> Vernacular Layer
                   </div>
                 </div>
               </div>
@@ -251,18 +273,29 @@ export default function FloatingBhashiniWidget({
                 <ArrowRightLeft className="w-3.5 h-3.5 text-amber-400 shrink-0" />
 
                 <select
-                  value={targetLang}
+                  id="select-target-language"
+                  value={targetLanguage}
                   onChange={(e) => {
-                    setTargetLang(e.target.value);
-                    if (inputText.trim()) triggerTranslation();
+                    const newTarget = e.target.value;
+                    updateTargetLanguage(newTarget);
+                    if (inputText.trim()) triggerTranslation(inputText, newTarget);
                   }}
                   className="bg-transparent text-amber-300 font-bold focus:outline-none cursor-pointer text-xs"
                 >
-                  {BHASHINI_LANGUAGES.map((lang) => (
-                    <option key={lang.code} value={lang.code} className="bg-slate-900 text-white">
-                      {lang.name} ({lang.native})
-                    </option>
-                  ))}
+                  <optgroup label="Major Indian Languages" className="bg-slate-900 text-amber-400 font-bold">
+                    {MAJOR_INDIAN_LANGUAGES.map((lang) => (
+                      <option key={lang.code} value={lang.code} className="bg-slate-900 text-white font-medium">
+                        {lang.name} ({lang.native})
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Other Regional Languages" className="bg-slate-900 text-slate-400 font-normal italic">
+                    {BHASHINI_LANGUAGES.filter(l => !MAJOR_INDIAN_LANGUAGES.some(m => m.code === l.code)).map((lang) => (
+                      <option key={lang.code} value={lang.code} className="bg-slate-900 text-slate-300 not-italic">
+                        {lang.name} ({lang.native})
+                      </option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
 
@@ -303,7 +336,7 @@ export default function FloatingBhashiniWidget({
                 disabled={isTranslating || !inputText.trim()}
                 className="w-full py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs transition-all disabled:opacity-50"
               >
-                {isTranslating ? 'Translating via Bhashini...' : 'Translate to Regional Language'}
+                {isTranslating ? 'Translating via Bhashini...' : `Translate to ${activeTargetLangObj.name} (${targetLanguage.toUpperCase()})`}
               </button>
 
               {/* Translation Result Card */}

@@ -23,6 +23,7 @@ import {
   translateText,
   playAudioSpeech,
   stopAudioSpeech,
+  MAJOR_INDIAN_LANGUAGES,
   PRELOADED_TOURIST_PHRASES,
 } from '../../services/bhashiniService';
 
@@ -32,6 +33,7 @@ export default function LanguageSupportModal({ isOpen, onClose }) {
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [fullscreenPhrase, setFullscreenPhrase] = useState(null);
+  const [targetLanguage, setTargetLanguage] = useState('hi');
   const [bhashiniInput, setBhashiniInput] = useState('');
   const [bhashiniResult, setBhashiniResult] = useState(null);
   const [isTranslating, setIsTranslating] = useState(false);
@@ -61,21 +63,28 @@ export default function LanguageSupportModal({ isOpen, onClose }) {
     }
   };
 
-  const handleSpeak = (text) => {
-    playAudioSpeech(text, 'hi');
+  const handleSpeak = (text, lang = targetLanguage) => {
+    playAudioSpeech(text, lang);
   };
 
   const handleBhashiniTranslate = async () => {
     if (!bhashiniInput.trim()) return;
     setIsTranslating(true);
     try {
-      const res = await translateText({ text: bhashiniInput, sourceLang: 'en', targetLang: 'hi' });
+      const res = await translateText({
+        text: bhashiniInput,
+        sourceLang: 'en',
+        targetLanguage,
+        targetLang: targetLanguage,
+      });
       setBhashiniResult({
         original: bhashiniInput,
-        hindi: res.hindi,
+        translated: res.translated,
+        hindi: res.translated,
         transliteration: res.transliteration,
         phonetic: res.phonetic,
         service: res.source,
+        targetLanguage,
         confidence: `${Math.round(res.confidence * 100)}% Contextual Match`,
       });
     } catch (err) {
@@ -161,7 +170,7 @@ export default function LanguageSupportModal({ isOpen, onClose }) {
                 <StatusBadge status="Official" />
               </div>
               <p className="text-xs text-slate-400">
-                BHASHINI Powered • Speech &amp; Text Translation for {traveler?.preferred_language?.toUpperCase() || 'EN'} &lt;–&gt; HI
+                BHASHINI Powered • Speech &amp; Text Translation for {traveler?.preferred_language?.toUpperCase() || 'EN'} &lt;–&gt; {targetLanguage.toUpperCase()}
               </p>
             </div>
           </div>
@@ -188,7 +197,10 @@ export default function LanguageSupportModal({ isOpen, onClose }) {
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-indigo-300 flex items-center space-x-1.5">
               <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Digital India Bhashini English → Hindi Translator</span>
+              <span>Digital India Bhashini English → {MAJOR_INDIAN_LANGUAGES.find(l => l.code === targetLanguage)?.name || 'Vernacular'} Translator</span>
+              <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase">
+                {targetLanguage}
+              </span>
             </span>
             <button
               onClick={handleOpenFullPage}
@@ -200,6 +212,18 @@ export default function LanguageSupportModal({ isOpen, onClose }) {
           </div>
 
           <div className="flex gap-2">
+            <select
+              id="modal-select-target-language"
+              value={targetLanguage}
+              onChange={(e) => setTargetLanguage(e.target.value)}
+              className="px-2.5 py-2 bg-surface border border-surface-border rounded-xl text-xs font-bold text-indigo-300 focus:outline-none focus:border-indigo-500 shrink-0 cursor-pointer"
+            >
+              {MAJOR_INDIAN_LANGUAGES.map((lang) => (
+                <option key={lang.code} value={lang.code} className="bg-surface text-slate-100 font-semibold">
+                  {lang.name} ({lang.native})
+                </option>
+              ))}
+            </select>
             <input
               type="text"
               placeholder="Type any custom sentence (e.g. 'How much to Qutub Minar by meter?')..."
@@ -221,7 +245,12 @@ export default function LanguageSupportModal({ isOpen, onClose }) {
           {bhashiniResult && (
             <div className="p-3 bg-surface border border-indigo-500/40 rounded-xl space-y-2 animate-in fade-in duration-150">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase font-bold text-emerald-400">{bhashiniResult.service}</span>
+                <div className="flex items-center space-x-1.5">
+                  <span className="text-[10px] uppercase font-bold text-emerald-400">{bhashiniResult.service}</span>
+                  <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase">
+                    {targetLanguage}
+                  </span>
+                </div>
                 <button
                   onClick={() => setFullscreenPhrase(bhashiniResult)}
                   className="text-[11px] text-indigo-300 hover:text-white font-semibold flex items-center space-x-1"
@@ -230,12 +259,12 @@ export default function LanguageSupportModal({ isOpen, onClose }) {
                   <span>Show to Driver</span>
                 </button>
               </div>
-              <div className="text-base font-bold text-white">{bhashiniResult.hindi}</div>
+              <div className="text-base font-bold text-white">{bhashiniResult.translated}</div>
               <div className="text-xs font-mono text-emerald-300/90">{bhashiniResult.transliteration}</div>
               <div className="flex items-center justify-between pt-1 text-[10px] text-slate-400">
                 <span>Pronunciation: {bhashiniResult.phonetic}</span>
                 <button
-                  onClick={() => handleSpeak(bhashiniResult.hindi)}
+                  onClick={() => handleSpeak(bhashiniResult.translated, targetLanguage)}
                   className="text-emerald-400 hover:underline flex items-center space-x-1"
                 >
                   <Volume2 className="w-3 h-3" />

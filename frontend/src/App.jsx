@@ -40,6 +40,7 @@ function AppLayout() {
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [isBhashiniOpen, setIsBhashiniOpen] = useState(false);
   const [isHelplineOpen, setIsHelplineOpen] = useState(false);
+  const [bhashiniTargetLanguage, setBhashiniTargetLanguage] = useState('hi');
   const { isCollapsed } = useSidebar();
 
   return (
@@ -128,8 +129,8 @@ function AppLayout() {
           <span className="text-xs font-extrabold font-display tracking-tight text-slate-950 hidden sm:inline whitespace-nowrap">
             Bhashini AI
           </span>
-          <span className="px-1.5 py-0.5 rounded-md bg-slate-950/20 text-[10px] font-mono font-black text-slate-950 shrink-0">
-            HI
+          <span className="px-1.5 py-0.5 rounded-md bg-slate-950/20 text-[10px] font-mono font-black text-slate-950 shrink-0 uppercase">
+            {bhashiniTargetLanguage}
           </span>
         </button>
       </div>
@@ -139,6 +140,8 @@ function AppLayout() {
         isOpen={isBhashiniOpen} 
         onClose={() => setIsBhashiniOpen(false)} 
         hideLauncher={true}
+        targetLanguage={bhashiniTargetLanguage}
+        onTargetLanguageChange={setBhashiniTargetLanguage}
       />
       <HelplineFloatingBadge 
         isOpen={isHelplineOpen} 

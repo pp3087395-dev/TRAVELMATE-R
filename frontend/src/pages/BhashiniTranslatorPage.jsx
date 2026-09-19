@@ -436,15 +436,27 @@ export default function BhashiniTranslatorPage() {
             </p>
           </div>
 
-          {/* Bhashini Live / Mock Status Badge */}
-          <div className="flex items-center space-x-2.5 bg-white/[0.04] px-4 py-2.5 rounded-2xl border border-white/10 shrink-0 self-start md:self-auto backdrop-blur-md">
-            <div className={`w-2.5 h-2.5 rounded-full ${BHASHINI_CONFIG.USE_MOCK ? 'bg-emerald-400 shadow-lg shadow-emerald-400/50' : 'bg-indigo-400'} animate-pulse`} />
-            <div className="text-left">
-              <div className="text-[11px] font-bold text-slate-200">
-                {BHASHINI_CONFIG.USE_MOCK ? 'Bhashini-Ready AI Engine' : 'Live ULCA Inference'}
-              </div>
-              <div className="text-[10px] text-slate-400">
-                {BHASHINI_CONFIG.USE_MOCK ? 'Offline Fallback Active' : 'Connected to MeitY Cloud'}
+          {/* Target Language Badge & Bhashini Live / Mock Status Badge */}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start md:self-auto">
+            <div className="flex items-center space-x-2 bg-indigo-500/10 px-3.5 py-2 rounded-2xl border border-indigo-500/30 backdrop-blur-md">
+              <span className="text-[10px] uppercase font-bold text-slate-400">Target</span>
+              <span className="px-1.5 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 font-mono font-bold text-xs uppercase border border-indigo-500/30">
+                {targetLanguage}
+              </span>
+              <span className="text-xs font-bold text-white">
+                {currentTargetLangName}
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-2.5 bg-white/[0.04] px-4 py-2.5 rounded-2xl border border-white/10 backdrop-blur-md">
+              <div className={`w-2.5 h-2.5 rounded-full ${BHASHINI_CONFIG.USE_MOCK ? 'bg-emerald-400 shadow-lg shadow-emerald-400/50' : 'bg-indigo-400'} animate-pulse`} />
+              <div className="text-left">
+                <div className="text-[11px] font-bold text-slate-200">
+                  {BHASHINI_CONFIG.USE_MOCK ? 'Bhashini-Ready AI Engine' : 'Live ULCA Inference'}
+                </div>
+                <div className="text-[10px] text-slate-400">
+                  {BHASHINI_CONFIG.USE_MOCK ? 'Offline Fallback Active' : 'Connected to MeitY Cloud'}
+                </div>
               </div>
             </div>
           </div>
@@ -574,11 +586,16 @@ export default function BhashiniTranslatorPage() {
               <Radio className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-white font-display">
-                Interactive Text & Speech-to-Speech Translator
-              </h2>
+              <div className="flex items-center space-x-2">
+                <h2 className="text-base sm:text-lg font-bold text-white font-display">
+                  Interactive Text & Speech-to-Speech Translator
+                </h2>
+                <span className="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 font-mono font-bold text-xs border border-indigo-500/30 uppercase">
+                  {targetLanguage}
+                </span>
+              </div>
               <p className="text-xs text-slate-400">
-                Type or speak aloud. Voice inputs are automatically transcribed, translated, and spoken back.
+                Target: <strong className="text-amber-300 font-semibold">{([ ...MAJOR_INDIAN_LANGUAGES, ...BHASHINI_LANGUAGES, ...INTERNATIONAL_LANGUAGES ].find(l => l.code === targetLanguage)?.name) || targetLanguage} ({([ ...MAJOR_INDIAN_LANGUAGES, ...BHASHINI_LANGUAGES, ...INTERNATIONAL_LANGUAGES ].find(l => l.code === targetLanguage)?.native) || targetLanguage.toUpperCase()})</strong> • Type or speak aloud. Voice inputs are automatically transcribed, translated, and spoken back.
               </p>
             </div>
           </div>
@@ -752,7 +769,12 @@ export default function BhashiniTranslatorPage() {
           {/* Column 2: Translated Output Panel */}
           <div className="space-y-4">
             <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
-              <span>{targetLang === 'auto' ? 'Auto Detected' : (BHASHINI_LANGUAGES.find(l => l.code === targetLang)?.name || 'Output')} Translation</span>
+              <span className="flex items-center space-x-1.5">
+                <span>{([ ...MAJOR_INDIAN_LANGUAGES, ...BHASHINI_LANGUAGES, ...INTERNATIONAL_LANGUAGES ].find(l => l.code === targetLanguage)?.name) || targetLanguage} Translation</span>
+                <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase">
+                  {targetLanguage}
+                </span>
+              </span>
               {translationResult && (
                 <span className="text-[10px] text-emerald-400 font-mono">
                   {Math.round(translationResult.confidence * 100)}% Confidence
