@@ -603,45 +603,36 @@ export default function BhashiniTranslatorPage() {
 
           {/* Language Switcher Bar */}
           <div className="flex items-center space-x-2 bg-white/[0.04] p-1.5 rounded-2xl border border-white/10 self-start sm:self-auto">
-            <select
-              value={sourceLang}
-              onChange={(e) => {
-                const newSource = e.target.value;
+            <BhashiniLanguageDropdown
+              id="select-source-language"
+              selectedLanguage={sourceLang}
+              onSelectLanguage={(newSource) => {
                 setSourceLang(newSource);
                 if (inputText.trim()) {
-                  handleTranslate(inputText, newSource, targetLang);
+                  handleTranslate(inputText, newSource, targetLanguage);
                 }
               }}
-              className="px-3 py-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 rounded-xl border border-emerald-500/20 focus:outline-none focus:border-emerald-500 appearance-none cursor-pointer"
-            >
-              <option value="auto" className="bg-surface text-emerald-300 font-bold">✨ Auto Detect Language</option>
-              <optgroup label="International Languages" className="bg-surface text-slate-400 font-normal italic">
-                {INTERNATIONAL_LANGUAGES.map(lang => (
-                  <option key={lang.code} value={lang.code} className="bg-surface text-slate-200 not-italic font-medium">
-                    {lang.name} {lang.native && lang.native !== lang.name ? `• ${lang.native}` : ''}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Indian Languages" className="bg-surface text-slate-400 font-normal italic">
-                {BHASHINI_LANGUAGES.map(lang => (
-                  <option key={lang.code} value={lang.code} className="bg-surface text-slate-200 not-italic font-medium">
-                    {lang.name} {lang.native && lang.native !== lang.name ? `• ${lang.native}` : ''}
-                  </option>
-                ))}
-              </optgroup>
-            </select>
+              theme="emerald"
+              includeAuto={true}
+              showSearch={true}
+              align="left"
+            />
             <button
+              type="button"
               onClick={() => {
                 const tempSource = sourceLang;
-                setSourceLang(targetLanguage);
-                updateTargetLanguage(tempSource);
+                const newSource = targetLanguage === 'auto' ? 'hi' : targetLanguage;
+                const newTarget = tempSource === 'auto' ? 'en' : tempSource;
+                setSourceLang(newSource);
+                updateTargetLanguage(newTarget);
                 if (translationResult && translationResult.translated) {
                   setInputText(translationResult.translated);
-                  handleTranslate(translationResult.translated, targetLanguage, tempSource);
+                  handleTranslate(translationResult.translated, newSource, newTarget);
                 }
               }}
-              title="Swap Languages"
-              className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+              title="Swap Languages (⇌)"
+              aria-label="Swap source and target languages"
+              className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-all hover:scale-110 active:scale-95"
             >
               <ArrowRightLeft className="w-3.5 h-3.5" />
             </button>

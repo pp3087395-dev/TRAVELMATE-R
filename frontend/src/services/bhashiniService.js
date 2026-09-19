@@ -56,6 +56,19 @@ export const MAJOR_INDIAN_LANGUAGES = [
   { code: 'or', name: 'Odia', native: 'ଓଡ଼ିଆ' },
 ];
 
+export const MAJOR_INTERNATIONAL_LANGUAGES = [
+  { code: 'en', name: 'English', native: 'English' },
+  { code: 'es', name: 'Spanish', native: 'Español' },
+  { code: 'fr', name: 'French', native: 'Français' },
+  { code: 'de', name: 'German', native: 'Deutsch' },
+  { code: 'zh', name: 'Chinese', native: '中文' },
+  { code: 'ja', name: 'Japanese', native: '日本語' },
+  { code: 'ar', name: 'Arabic', native: 'العربية' },
+  { code: 'ru', name: 'Russian', native: 'Русский' },
+  { code: 'pt', name: 'Portuguese', native: 'Português' },
+  { code: 'it', name: 'Italian', native: 'Italiano' },
+];
+
 export const BHASHINI_LANGUAGES = [
   { code: 'hi', name: 'Hindi', native: 'हिन्दी', tts: true },
   { code: 'bho', name: 'Bhojpuri', native: 'भोजपुरी', tts: true },
@@ -392,7 +405,11 @@ export async function translateText({ text, audioContent, sourceLang = 'en', tar
     }
   }
 
-  const targetLangMeta = MAJOR_INDIAN_LANGUAGES.find(l => l.code === resolvedTarget) || BHASHINI_LANGUAGES.find(l => l.code === resolvedTarget);
+  const targetLangMeta =
+    MAJOR_INDIAN_LANGUAGES.find((l) => l.code === resolvedTarget) ||
+    MAJOR_INTERNATIONAL_LANGUAGES.find((l) => l.code === resolvedTarget) ||
+    BHASHINI_LANGUAGES.find((l) => l.code === resolvedTarget) ||
+    INTERNATIONAL_LANGUAGES.find((l) => l.code === resolvedTarget);
   const fallbackVernacular = resolvedTarget === 'hi'
     ? `कृपया सुनिए: "${cleanText}" (भाषिणी अनुवाद)`
     : `${targetLangMeta ? targetLangMeta.name : resolvedTarget}: "${cleanText}"`;

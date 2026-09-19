@@ -256,22 +256,40 @@ export default function FloatingBhashiniWidget({
             {/* Content Body */}
             <div className="p-4 space-y-4 overflow-y-auto no-scrollbar flex-1">
               
-              {/* Language Switcher */}
-              <div className="flex items-center justify-between gap-2 p-2 rounded-2xl bg-white/[0.03] border border-white/5 text-xs">
-                <select
-                  value={sourceLang}
-                  onChange={(e) => setSourceLang(e.target.value)}
-                  className="bg-transparent text-white font-medium focus:outline-none cursor-pointer text-xs"
-                >
-                  <option value="en" className="bg-slate-900 text-white">English (EN)</option>
-                  <option value="hi" className="bg-slate-900 text-white">हिन्दी (Hindi)</option>
-                  <option value="fr" className="bg-slate-900 text-white">Français (FR)</option>
-                  <option value="de" className="bg-slate-900 text-white">Deutsch (DE)</option>
-                  <option value="es" className="bg-slate-900 text-white">Español (ES)</option>
-                  <option value="ja" className="bg-slate-900 text-white">日本語 (JA)</option>
-                </select>
+              {/* Language Switcher Bar */}
+              <div className="flex items-center justify-between gap-1.5 sm:gap-2 p-1.5 rounded-2xl bg-white/[0.03] border border-white/5 text-xs">
+                <BhashiniLanguageDropdown
+                  id="widget-select-source-language"
+                  selectedLanguage={sourceLang}
+                  onSelectLanguage={(newSource) => {
+                    setSourceLang(newSource);
+                    if (inputText.trim()) triggerTranslation(inputText, targetLanguage);
+                  }}
+                  theme="emerald"
+                  includeAuto={true}
+                  showSearch={true}
+                  align="left"
+                />
 
-                <ArrowRightLeft className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const tempSource = sourceLang;
+                    const newSource = targetLanguage === 'auto' ? 'hi' : targetLanguage;
+                    const newTarget = tempSource === 'auto' ? 'en' : tempSource;
+                    setSourceLang(newSource);
+                    updateTargetLanguage(newTarget);
+                    if (translationResult && translationResult.translated) {
+                      setInputText(translationResult.translated);
+                      triggerTranslation(translationResult.translated, newTarget);
+                    }
+                  }}
+                  title="Swap Languages (⇌)"
+                  aria-label="Swap Languages"
+                  className="p-2 text-slate-400 hover:text-amber-300 hover:bg-white/10 rounded-xl transition-all hover:scale-110 active:scale-95 shrink-0"
+                >
+                  <ArrowRightLeft className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                </button>
 
                 <BhashiniLanguageDropdown
                   id="select-target-language"
@@ -281,6 +299,7 @@ export default function FloatingBhashiniWidget({
                     if (inputText.trim()) triggerTranslation(inputText, newTarget);
                   }}
                   theme="amber"
+                  includeAuto={false}
                   showSearch={true}
                   align="right"
                 />

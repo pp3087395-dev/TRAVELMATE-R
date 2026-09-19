@@ -182,10 +182,14 @@ export default function PhraseHelperPage() {
   // Language Swap
   const handleSwapLanguages = () => {
     const tempSource = sourceLang;
-    setSourceLang(targetLanguage);
-    updateTargetLanguage(tempSource);
-    setInputText('');
-    setTranslationResult(null);
+    const newSource = targetLanguage === 'auto' ? 'hi' : targetLanguage;
+    const newTarget = tempSource === 'auto' ? 'en' : tempSource;
+    setSourceLang(newSource);
+    updateTargetLanguage(newTarget);
+    if (translationResult && translationResult.translated) {
+      setInputText(translationResult.translated);
+      handleTranslate(translationResult.translated, newSource, newTarget);
+    }
   };
 
   // Copy to clipboard
@@ -466,13 +470,26 @@ export default function PhraseHelperPage() {
 
           {/* Language Switcher Bar */}
           <div className="flex items-center space-x-2 bg-surface-card p-1.5 rounded-2xl border border-surface-border self-start sm:self-auto">
-            <span className="px-3 py-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
-              {sourceLang === 'en' ? 'English (EN)' : `${targetLanguage.toUpperCase()}`}
-            </span>
+            <BhashiniLanguageDropdown
+              id="phrase-source-language-select"
+              selectedLanguage={sourceLang}
+              onSelectLanguage={(newSource) => {
+                setSourceLang(newSource);
+                if (inputText.trim()) {
+                  handleTranslate(inputText, newSource, targetLanguage);
+                }
+              }}
+              theme="emerald"
+              includeAuto={true}
+              showSearch={true}
+              align="left"
+            />
             <button
+              type="button"
               onClick={handleSwapLanguages}
-              title="Swap Languages"
-              className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+              title="Swap Languages (⇌)"
+              aria-label="Swap source and target languages"
+              className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-all hover:scale-110 active:scale-95"
             >
               <ArrowRightLeft className="w-3.5 h-3.5" />
             </button>
@@ -497,7 +514,7 @@ export default function PhraseHelperPage() {
           {/* Column 1: Input (Text + Speech Voice Recorder) */}
           <div className="space-y-4">
             <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
-              <span>{sourceLang === 'en' ? 'English Input' : 'Hindi Input'}</span>
+              <span>{sourceLang === 'auto' ? 'Auto Detected Input' : `${sourceLang.toUpperCase()} Input`}</span>
               <span className="text-[10px] text-slate-500 lowercase">
                 {speechSupported ? 'mic ready' : 'speech input not supported'}
               </span>
