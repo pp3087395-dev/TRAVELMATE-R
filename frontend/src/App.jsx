@@ -82,29 +82,33 @@ function AppLayout() {
         </main>
       </div>
 
-      {/* Floating Chatbot Launcher (TravelMate AI - cleanly aligned in bottom-left) */}
-      <div className="fixed bottom-4 left-4 z-30 md:bottom-6 md:left-6 flex items-center">
+      {/* Floating Chatbot Launcher (TravelMate AI - cleanly positioned with dynamic sidebar offset) */}
+      <div 
+        className={`fixed bottom-4 sm:bottom-6 z-30 transition-all duration-300 ease-in-out flex items-center pointer-events-auto ${
+          isCollapsed ? 'left-4 sm:left-6 lg:left-24' : 'left-4 sm:left-6 lg:left-72'
+        }`}
+      >
         <button
           id="btn-floating-gemini-chat"
           onClick={() => setIsGeminiChatOpen(true)}
-          className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-500 hover:to-teal-500 text-white px-3.5 py-2.5 rounded-full shadow-xl shadow-teal-600/30 border border-teal-400/40 transition-all duration-200 hover:scale-105 active:scale-95 focus:outline-none"
+          className="flex items-center space-x-2 h-11 sm:h-12 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-teal-600 hover:from-blue-500 hover:to-teal-500 text-white shadow-xl shadow-teal-600/25 border border-teal-400/40 transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none"
           title="Ask TravelMate AI Assistant"
           aria-label="Open TravelMate AI Assistant"
         >
-          <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
-          <span className="text-xs font-semibold tracking-wide font-display hidden sm:inline">
+          <Sparkles className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-300 animate-pulse shrink-0" />
+          <span className="text-xs font-bold tracking-wide font-display hidden sm:inline whitespace-nowrap">
             TravelMate AI
           </span>
         </button>
       </div>
 
-      {/* Unified Floating Action Buttons Group (Bottom-Right: Voice Interaction & Bhashini AI) */}
-      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-2.5 sm:gap-3">
+      {/* Unified Floating Action Buttons Group (Bottom-Right: Voice Interaction & Bhashini AI Side-by-Side) */}
+      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 flex flex-row items-center flex-nowrap gap-3 sm:gap-4 pointer-events-auto">
         {/* Red Voice Interaction Button */}
         <button
           id="btn-floating-helplines"
           onClick={() => setIsHelplineOpen(true)}
-          className="group relative flex items-center justify-center space-x-2 h-11 sm:h-12 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs shadow-lg shadow-red-600/30 border border-rose-400/50 hover:ring-2 hover:ring-rose-400/60 hover:shadow-rose-500/40 transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none"
+          className="group relative flex items-center justify-center space-x-2 h-11 sm:h-12 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs shadow-lg shadow-red-600/30 border border-rose-400/50 hover:ring-2 hover:ring-rose-400/60 hover:shadow-rose-500/40 transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none shrink-0"
           title="Voice Interaction & Emergency Helpline 1363 / 112"
           aria-label="Voice Interaction and Helpline"
         >
@@ -121,7 +125,7 @@ function AppLayout() {
         <button
           id="btn-floating-bhashini-widget"
           onClick={() => setIsBhashiniOpen((prev) => !prev)}
-          className="group relative flex items-center justify-center space-x-2 h-11 sm:h-12 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/30 border border-amber-300/50 hover:ring-2 hover:ring-amber-400/60 hover:shadow-amber-500/40 transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none"
+          className="group relative flex items-center justify-center space-x-2 h-11 sm:h-12 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/30 border border-amber-300/50 hover:ring-2 hover:ring-amber-400/60 hover:shadow-amber-500/40 transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none shrink-0"
           title="Digital India Bhashini Multilingual AI Voice Translator"
           aria-label="Open Bhashini AI Multilingual Translator"
         >
