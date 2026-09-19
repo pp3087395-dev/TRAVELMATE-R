@@ -1,6 +1,8 @@
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const { db, store } = require('../config/db');
+const emailService = require('../services/emailService');
+const smsService = require('../services/smsService');
 
 // In-memory OTP & Session stores with automatic expiration cleanup
 if (!store.otpStore) {
@@ -42,7 +44,7 @@ function generateJourneyCode() {
 
 /**
  * POST /api/auth/send-otp
- * Generates and dispatches a 6-digit verification code to email or mobile number.
+ * Generates and dispatches a 6-digit verification code to email or mobile number via production gateway.
  */
 exports.sendOtp = async (req, res) => {
   try {
@@ -77,28 +79,63 @@ exports.sendOtp = async (req, res) => {
 
     // Generate cryptographically secure 6-digit numeric OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+    const expiresInMinutes = 5;
+    const expiresAt = Date.now() + expiresInMinutes * 60 * 1000; // 5 minutes
 
+    // Dispatch via real production gateway (Nodemailer for Email, Twilio/Fast2SMS for Phone)
+    let dispatchResult;
+    if (isEmail) {
+      dispatchResult = await emailService.sendOtpEmail({
+        to: cleanId,
+        otp,
+        travelerName: name || 'Traveler',
+        expiresInMinutes
+      });
+    } else {
+      dispatchResult = await smsService.sendOtpSms({
+        to: cleanId,
+        otp,
+        travelerName: name || 'Traveler',
+        expiresInMinutes
+      });
+    }
+
+    // Store in active OTP cache
     store.otpStore.set(cleanId, {
       otp,
       expiresAt,
       type: isEmail ? 'email' : 'mobile',
       name: name?.trim() || null,
-      attempts: 0
+      attempts: 0,
+      delivery: {
+        gateway: dispatchResult.gateway,
+        messageId: dispatchResult.messageId,
+        previewUrl: dispatchResult.previewUrl || null,
+        status: dispatchResult.status || 'sent'
+      }
     });
 
     console.log(`\n=======================================================`);
     console.log(`[AUTH SERVICE] 🔐 Verification OTP for ${cleanId}:`);
+    console.log(`👉 GATEWAY: ${dispatchResult.gateway}`);
     console.log(`👉 OTP CODE: ${otp}`);
-    console.log(`⏳ Valid for: 10 minutes (expires at ${new Date(expiresAt).toLocaleTimeString()})`);
+    console.log(`⏳ Valid for: 5 minutes (expires at ${new Date(expiresAt).toLocaleTimeString()})`);
+    if (dispatchResult.previewUrl) {
+      console.log(`👉 EMAIL PREVIEW: ${dispatchResult.previewUrl}`);
+    }
     console.log(`=======================================================\n`);
 
     res.json({
       success: true,
-      message: `Verification code sent to ${cleanId}`,
+      message: isEmail
+        ? `Verification code dispatched to ${cleanId} via ${dispatchResult.gateway}`
+        : `SMS verification code sent to ${cleanId} via ${dispatchResult.gateway}`,
       identifier: cleanId,
       type: isEmail ? 'email' : 'mobile',
-      devOtp: otp, // Provided for instant 1-click evaluation & judging
+      gateway: dispatchResult.gateway,
+      previewUrl: dispatchResult.previewUrl || null,
+      devOtp: otp, // Kept for convenient hackathon testing
+      expiresInSeconds: 300,
       expiresAt: new Date(expiresAt).toISOString()
     });
   } catch (err) {

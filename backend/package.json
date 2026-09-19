@@ -15,6 +15,7 @@
     "express": "^4.19.2",
     "express-rate-limit": "^7.5.0",
     "morgan": "^1.10.0",
+    "nodemailer": "^10.0.10",
     "pg": "^8.23.0",
     "uuid": "^9.0.1"
   }
