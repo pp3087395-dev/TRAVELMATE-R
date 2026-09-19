@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { PhoneCall, ShieldAlert, X, ExternalLink, Globe, Landmark, ChevronUp, AlertOctagon } from 'lucide-react';
+import { PhoneCall, ShieldAlert, X, ExternalLink, Globe, Landmark, ChevronUp, AlertOctagon, Mic } from 'lucide-react';
 import { useTraveler } from '../../context/TravelerContext';
 import { api } from '../../services/api';
 import StatusBadge from './StatusBadge';
 
-export default function HelplineFloatingBadge() {
+export default function HelplineFloatingBadge({
+  isOpen: externalIsOpen,
+  onClose: externalOnClose,
+  hideLauncher = false
+} = {}) {
   const { traveler } = useTraveler();
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const setIsOpen = (val) => {
+    if (!val && externalOnClose) externalOnClose();
+    else setInternalIsOpen(val);
+  };
   const [directory, setDirectory] = useState(null);
 
   useEffect(() => {
@@ -22,21 +31,25 @@ export default function HelplineFloatingBadge() {
   return (
     <>
       {/* Floating 1-Tap Trigger Button */}
-      <div className="fixed bottom-4 right-4 z-30 md:bottom-6 md:right-6">
-        <button
-          id="btn-floating-helplines"
-          onClick={() => setIsOpen(true)}
-          className="group relative flex items-center space-x-2 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white px-4 py-3 rounded-full shadow-lg shadow-red-600/30 border border-red-400/40 transition-all duration-300 hover:scale-105 active:scale-95"
-        >
-          <div className="relative">
-            <PhoneCall className="w-5 h-5 animate-pulse" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full ring-2 ring-background animate-ping" />
-          </div>
-          <span className="text-xs font-semibold tracking-wide uppercase font-display hidden sm:inline">
-            Helpline 1363 / 112
-          </span>
-        </button>
-      </div>
+      {!hideLauncher && (
+        <div className="fixed bottom-4 right-4 z-30 md:bottom-6 md:right-6">
+          <button
+            id="btn-floating-helplines"
+            onClick={() => setIsOpen(true)}
+            className="group relative flex items-center justify-center space-x-2 h-11 sm:h-12 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs shadow-lg shadow-red-600/30 border border-rose-400/50 hover:ring-2 hover:ring-rose-400/60 hover:shadow-rose-500/40 transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none"
+            title="Voice Interaction & Emergency Helpline 1363 / 112"
+            aria-label="Voice Interaction and Helpline"
+          >
+            <div className="relative flex items-center justify-center">
+              <Mic className="w-4 h-4 sm:w-5 sm:h-5 text-white stroke-[2.2] animate-pulse shrink-0" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full ring-2 ring-red-600 animate-ping" />
+            </div>
+            <span className="text-xs font-bold font-display tracking-tight text-white hidden sm:inline whitespace-nowrap">
+              Voice Interaction
+            </span>
+          </button>
+        </div>
+      )}
 
       {/* Slide-over / Modal Directory Card */}
       {isOpen && (

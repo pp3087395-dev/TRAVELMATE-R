@@ -33,7 +33,7 @@ export default function TMChatbotModal({ isOpen, onClose }) {
     {
       sender: 'bot',
       text: `Namaste! Click on it and find this in the app!\n\n[action: /discover | Explore Places] [action: /fare-meter | Auto Fare Meter] [action: /bhashini-translator | Bhashini Translator]`,
-      source: 'TM chatbot • Powered by Gemini',
+      source: 'TravelMate AI Assistant',
       confidence: 'Live Grounded'
     }
   ]);
@@ -350,10 +350,10 @@ export default function TMChatbotModal({ isOpen, onClose }) {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h3 className="text-base font-bold text-white font-display">TM chatbot</h3>
+                <h3 className="text-base font-bold text-white font-display">TravelMate AI</h3>
                 <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-500/20 text-emerald-300 rounded-md border border-emerald-500/30 uppercase tracking-wide flex items-center space-x-1">
                   <Sparkles className="w-3 h-3 text-emerald-400" />
-                  <span>Gemini AI</span>
+                  <span>TravelMate AI</span>
                 </span>
               </div>
               <p className="text-[11px] text-slate-400">
@@ -481,7 +481,7 @@ export default function TMChatbotModal({ isOpen, onClose }) {
             <div className="flex justify-start">
               <div className="p-3.5 bg-surface-card border border-surface-border rounded-2xl rounded-bl-none text-xs text-slate-300 flex items-center space-x-2.5 shadow-md">
                 <Sparkles className="w-4 h-4 text-emerald-400 animate-spin" />
-                <span className="font-medium">TM chatbot is querying Gemini & preparing voice guide...</span>
+                <span className="font-medium">TravelMate AI is preparing your response & voice guide...</span>
               </div>
             </div>
           )}

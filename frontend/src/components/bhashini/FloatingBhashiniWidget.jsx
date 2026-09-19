@@ -23,8 +23,23 @@ import {
 } from '../../services/bhashiniService';
 import { useToast } from '../../context/ToastContext';
 
-export default function FloatingBhashiniWidget() {
-  const [isOpen, setIsOpen] = useState(false);
+export default function FloatingBhashiniWidget({
+  isOpen: externalIsOpen,
+  onClose: externalOnClose,
+  hideLauncher = false
+} = {}) {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const setIsOpen = (val) => {
+    if (typeof val === 'function') {
+      const nextVal = val(isOpen);
+      if (!nextVal && externalOnClose) externalOnClose();
+      else setInternalIsOpen(nextVal);
+    } else {
+      if (!val && externalOnClose) externalOnClose();
+      else setInternalIsOpen(val);
+    }
+  };
   const [inputText, setInputText] = useState('');
   const [sourceLang, setSourceLang] = useState('en');
   const [targetLang, setTargetLang] = useState('hi');
@@ -138,23 +153,25 @@ export default function FloatingBhashiniWidget() {
   return (
     <>
       {/* Floating Launcher Button */}
-      <div className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40">
-        <button
-          id="btn-floating-bhashini-widget"
-          onClick={() => setIsOpen(!isOpen)}
-          className="relative group flex items-center space-x-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold text-xs shadow-xl shadow-amber-500/25 border border-amber-300/40 transition-all duration-300 hover:scale-105 active:scale-95"
-          aria-label="Open Bhashini AI Multilingual Translator"
-          title="Digital India Bhashini Multilingual Voice Translator"
-        >
-          <Languages className="w-4 h-4 text-slate-950 group-hover:rotate-12 transition-transform" />
-          <span className="font-display tracking-tight font-extrabold hidden sm:inline">
-            Bhashini AI
-          </span>
-          <span className="px-1.5 py-0.2 rounded-md bg-slate-950/20 text-[10px] font-mono font-black">
-            {activeTargetLangObj.code.toUpperCase()}
-          </span>
-        </button>
-      </div>
+      {!hideLauncher && (
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40">
+          <button
+            id="btn-floating-bhashini-widget"
+            onClick={() => setIsOpen(!isOpen)}
+            className="group relative flex items-center justify-center space-x-2 h-11 sm:h-12 px-3.5 sm:px-4 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/30 border border-amber-300/50 hover:ring-2 hover:ring-amber-400/60 hover:shadow-amber-500/40 transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none"
+            aria-label="Open Bhashini AI Multilingual Translator"
+            title="Digital India Bhashini Multilingual AI Voice Translator"
+          >
+            <Languages className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950 stroke-[2.2] group-hover:rotate-12 transition-transform shrink-0" />
+            <span className="font-display tracking-tight font-extrabold hidden sm:inline whitespace-nowrap">
+              Bhashini AI
+            </span>
+            <span className="px-1.5 py-0.5 rounded-md bg-slate-950/20 text-[10px] font-mono font-black text-slate-950 shrink-0">
+              {activeTargetLangObj.code.toUpperCase()}
+            </span>
+          </button>
+        </div>
+      )}
 
       {/* Expandable Translation Console */}
       {isOpen && (
@@ -202,6 +219,7 @@ export default function FloatingBhashiniWidget() {
                 <button
                   onClick={() => {
                     setIsOpen(false);
+                    if (externalOnClose) externalOnClose();
                     setIsFullscreen(false);
                     stopAudioSpeech();
                   }}

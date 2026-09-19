@@ -30,6 +30,7 @@ import {
   stopAudioSpeech,
   PRELOADED_TOURIST_PHRASES,
   BHASHINI_CONFIG,
+  MAJOR_INDIAN_LANGUAGES,
 } from '../services/bhashiniService';
 import StatusBadge from '../components/common/StatusBadge';
 import { useTraveler } from '../context/TravelerContext';
@@ -39,7 +40,13 @@ export default function PhraseHelperPage() {
 
   // Translation States
   const [sourceLang, setSourceLang] = useState('en');
+  const [targetLanguage, setTargetLanguage] = useState('hi');
   const [targetLang, setTargetLang] = useState('hi');
+
+  const updateTargetLanguage = (code) => {
+    setTargetLanguage(code);
+    setTargetLang(code);
+  };
   const [inputText, setInputText] = useState('');
   const [translationResult, setTranslationResult] = useState(null);
   const [isTranslating, setIsTranslating] = useState(false);
@@ -108,7 +115,7 @@ export default function PhraseHelperPage() {
   }, [sourceLang]);
 
   // Handle Text Translation
-  const handleTranslate = async (textToTranslate = inputText) => {
+  const handleTranslate = async (textToTranslate = inputText, sLang = sourceLang, tLang = targetLanguage || targetLang) => {
     const query = (textToTranslate || '').trim();
     if (!query) return;
 
@@ -116,8 +123,9 @@ export default function PhraseHelperPage() {
     try {
       const result = await translateText({
         text: query,
-        sourceLang,
-        targetLang,
+        sourceLang: sLang,
+        targetLanguage: tLang,
+        targetLang: tLang,
       });
       setTranslationResult(result);
     } catch (err) {
@@ -135,6 +143,7 @@ export default function PhraseHelperPage() {
       const result = await speechToSpeech({
         text: spokenText,
         sourceLang,
+        targetLanguage,
         targetLang,
       });
       setTranslationResult(result);
@@ -172,8 +181,8 @@ export default function PhraseHelperPage() {
   // Language Swap
   const handleSwapLanguages = () => {
     const tempSource = sourceLang;
-    setSourceLang(targetLang);
-    setTargetLang(tempSource);
+    setSourceLang(targetLanguage);
+    updateTargetLanguage(tempSource);
     setInputText('');
     setTranslationResult(null);
   };
@@ -451,8 +460,8 @@ export default function PhraseHelperPage() {
 
           {/* Language Switcher Bar */}
           <div className="flex items-center space-x-2 bg-surface-card p-1.5 rounded-2xl border border-surface-border self-start sm:self-auto">
-            <span className="px-3 py-1 text-xs font-bold text-emerald-400 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
-              {sourceLang === 'en' ? 'English (EN)' : 'Hindi (HI)'}
+            <span className="px-3 py-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+              {sourceLang === 'en' ? 'English (EN)' : `${targetLanguage.toUpperCase()}`}
             </span>
             <button
               onClick={handleSwapLanguages}
@@ -461,9 +470,24 @@ export default function PhraseHelperPage() {
             >
               <ArrowRightLeft className="w-3.5 h-3.5" />
             </button>
-            <span className="px-3 py-1 text-xs font-bold text-indigo-400 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
-              {targetLang === 'hi' ? 'Hindi (HI)' : 'English (EN)'}
-            </span>
+            <select
+              id="phrase-target-language-select"
+              value={targetLanguage}
+              onChange={(e) => {
+                const newTarget = e.target.value;
+                updateTargetLanguage(newTarget);
+                if (inputText.trim()) {
+                  handleTranslate(inputText, sourceLang, newTarget);
+                }
+              }}
+              className="px-3 py-1.5 text-xs font-bold text-indigo-400 bg-indigo-500/10 rounded-xl border border-indigo-500/20 focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer"
+            >
+              {MAJOR_INDIAN_LANGUAGES.map((lang) => (
+                <option key={lang.code} value={lang.code} className="bg-surface text-slate-100 font-semibold">
+                  {lang.name} ({lang.native})
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

@@ -34,6 +34,7 @@ import {
   BHASHINI_CONFIG,
   BHASHINI_LANGUAGES,
   INTERNATIONAL_LANGUAGES,
+  MAJOR_INDIAN_LANGUAGES,
 } from '../services/bhashiniService';
 import StatusBadge from '../components/common/StatusBadge';
 import { useTraveler } from '../context/TravelerContext';
@@ -55,7 +56,13 @@ export default function BhashiniTranslatorPage() {
 
   // Translation States
   const [sourceLang, setSourceLang] = useState('en');
+  const [targetLanguage, setTargetLanguage] = useState('hi');
   const [targetLang, setTargetLang] = useState('hi');
+
+  const updateTargetLanguage = (code) => {
+    setTargetLanguage(code);
+    setTargetLang(code);
+  };
   const [inputText, setInputText] = useState('');
   const [translationResult, setTranslationResult] = useState(null);
   const [isTranslating, setIsTranslating] = useState(false);
@@ -95,7 +102,7 @@ export default function BhashiniTranslatorPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Handle Text Translation
-  const handleTranslate = async (textToTranslate = inputText, sLang = sourceLang, tLang = targetLang) => {
+  const handleTranslate = async (textToTranslate = inputText, sLang = sourceLang, tLang = targetLanguage || targetLang) => {
     const query = (textToTranslate || '').trim();
     if (!query) return;
 
@@ -104,6 +111,7 @@ export default function BhashiniTranslatorPage() {
       const result = await translateText({
         text: query,
         sourceLang: sLang,
+        targetLanguage: tLang,
         targetLang: tLang,
       });
       setTranslationResult(result);
@@ -122,6 +130,7 @@ export default function BhashiniTranslatorPage() {
       const result = await speechToSpeech({
         text: spokenText,
         sourceLang,
+        targetLanguage,
         targetLang,
       });
       setTranslationResult(result);
@@ -352,7 +361,7 @@ export default function BhashiniTranslatorPage() {
   const lastTouristMessage = [...liveHistory].reverse().find(m => m.speaker === 'tourist');
   const lastLocalMessage = [...liveHistory].reverse().find(m => m.speaker === 'local');
 
-  const currentTargetLangName = targetLang === 'auto' ? 'Hindi' : ([...BHASHINI_LANGUAGES, ...INTERNATIONAL_LANGUAGES].find(l => l.code === targetLang)?.name || 'Local Language');
+  const currentTargetLangName = targetLanguage === 'auto' ? 'Hindi' : ([...MAJOR_INDIAN_LANGUAGES, ...BHASHINI_LANGUAGES, ...INTERNATIONAL_LANGUAGES].find(l => l.code === targetLanguage || l.code === targetLang)?.name || 'Local Language');
   const currentSourceLangName = sourceLang === 'auto' ? 'English' : ([...INTERNATIONAL_LANGUAGES, ...BHASHINI_LANGUAGES].find(l => l.code === sourceLang)?.name || 'English');
 
   return (
@@ -606,11 +615,11 @@ export default function BhashiniTranslatorPage() {
             <button
               onClick={() => {
                 const tempSource = sourceLang;
-                setSourceLang(targetLang);
-                setTargetLang(tempSource);
+                setSourceLang(targetLanguage);
+                updateTargetLanguage(tempSource);
                 if (translationResult && translationResult.translated) {
                   setInputText(translationResult.translated);
-                  handleTranslate(translationResult.translated, targetLang, tempSource);
+                  handleTranslate(translationResult.translated, targetLanguage, tempSource);
                 }
               }}
               title="Swap Languages"
@@ -619,19 +628,26 @@ export default function BhashiniTranslatorPage() {
               <ArrowRightLeft className="w-3.5 h-3.5" />
             </button>
             <select
-              value={targetLang}
+              id="select-target-language"
+              value={targetLanguage}
               onChange={(e) => {
                 const newTarget = e.target.value;
-                setTargetLang(newTarget);
+                updateTargetLanguage(newTarget);
                 if (inputText.trim()) {
                   handleTranslate(inputText, sourceLang, newTarget);
                 }
               }}
               className="px-3 py-1.5 text-xs font-bold text-indigo-400 bg-indigo-500/10 rounded-xl border border-indigo-500/20 focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer"
             >
-              <option value="auto" className="bg-surface text-indigo-300 font-bold">✨ Auto Detect Language</option>
-              <optgroup label="Indian Languages" className="bg-surface text-slate-400 font-normal italic">
-                {BHASHINI_LANGUAGES.map(lang => (
+              <optgroup label="Major Indian Languages" className="bg-surface text-amber-400 font-bold not-italic">
+                {MAJOR_INDIAN_LANGUAGES.map(lang => (
+                  <option key={lang.code} value={lang.code} className="bg-surface text-slate-100 not-italic font-semibold">
+                    {lang.name} ({lang.native})
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Other Regional Languages" className="bg-surface text-slate-400 font-normal italic">
+                {BHASHINI_LANGUAGES.filter(l => !MAJOR_INDIAN_LANGUAGES.some(m => m.code === l.code)).map(lang => (
                   <option key={lang.code} value={lang.code} className="bg-surface text-slate-200 not-italic font-medium">
                     {lang.name} {lang.native && lang.native !== lang.name ? `• ${lang.native}` : ''}
                   </option>
@@ -984,13 +1000,19 @@ export default function BhashiniTranslatorPage() {
                 <span className="shrink-0">Speaks:</span>
                 <select
                   id="live-local-lang-select"
-                  value={targetLang}
-                  onChange={(e) => setTargetLang(e.target.value)}
+                  value={targetLanguage}
+                  onChange={(e) => updateTargetLanguage(e.target.value)}
                   className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 rounded-lg px-2.5 py-1 text-xs font-semibold focus:outline-none focus:border-emerald-400 cursor-pointer max-w-[210px] truncate"
                 >
-                  <option value="auto" className="bg-surface text-emerald-300 font-bold">✨ Auto Detect</option>
-                  <optgroup label="Indian Languages" className="bg-surface text-slate-400 italic">
-                    {BHASHINI_LANGUAGES.map(l => (
+                  <optgroup label="Major Indian Languages" className="bg-surface text-amber-400 font-bold not-italic">
+                    {MAJOR_INDIAN_LANGUAGES.map(l => (
+                      <option key={l.code} value={l.code} className="bg-surface text-slate-100 not-italic font-semibold">
+                        {l.name} ({l.native})
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Other Regional Languages" className="bg-surface text-slate-400 italic">
+                    {BHASHINI_LANGUAGES.filter(l => !MAJOR_INDIAN_LANGUAGES.some(m => m.code === l.code)).map(l => (
                       <option key={l.code} value={l.code} className="bg-surface text-slate-200 not-italic">
                         {l.name} {l.native && l.native !== l.name ? `• ${l.native}` : ''}
                       </option>

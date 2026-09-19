@@ -43,6 +43,19 @@ export const INTERNATIONAL_LANGUAGES = [
   { code: 'no', name: 'Norwegian', native: 'Norsk' }
 ];
 
+export const MAJOR_INDIAN_LANGUAGES = [
+  { code: 'hi', name: 'Hindi', native: 'हिन्दी' },
+  { code: 'bn', name: 'Bengali', native: 'বাংলা' },
+  { code: 'ta', name: 'Tamil', native: 'தமிழ்' },
+  { code: 'te', name: 'Telugu', native: 'తెలుగు' },
+  { code: 'mr', name: 'Marathi', native: 'मराठी' },
+  { code: 'gu', name: 'Gujarati', native: 'ગુજરાતી' },
+  { code: 'pa', name: 'Punjabi', native: 'ਪੰਜਾਬੀ' },
+  { code: 'kn', name: 'Kannada', native: 'ಕನ್ನಡ' },
+  { code: 'ml', name: 'Malayalam', native: 'മലയാളം' },
+  { code: 'or', name: 'Odia', native: 'ଓଡ଼ିଆ' },
+];
+
 export const BHASHINI_LANGUAGES = [
   { code: 'hi', name: 'Hindi', native: 'हिन्दी', tts: true },
   { code: 'bho', name: 'Bhojpuri', native: 'भोजपुरी', tts: true },
@@ -283,12 +296,13 @@ let activeAudioInstance = null;
  * @param {boolean} [params.computeTTS=false] - Whether to synthesize server TTS audio
  * @returns {Promise<Object>} Standardized translation result
  */
-export async function translateText({ text, audioContent, sourceLang = 'en', targetLang = 'hi', computeTTS = false }) {
+export async function translateText({ text, audioContent, sourceLang = 'en', targetLanguage, targetLang = 'hi', computeTTS = false }) {
   if (!text?.trim() && !audioContent) {
     throw new Error('Input text or audio is required for translation.');
   }
 
   const cleanText = text ? text.trim() : '';
+  const resolvedTarget = targetLanguage || targetLang || 'hi';
 
   try {
     const response = await fetch(`${API_BASE}/translate`, {
@@ -299,8 +313,9 @@ export async function translateText({ text, audioContent, sourceLang = 'en', tar
         audioContent,
         sourceLang,
         source_lang: sourceLang,
-        targetLang,
-        target_lang: targetLang,
+        targetLanguage: resolvedTarget,
+        targetLang: resolvedTarget,
+        target_lang: resolvedTarget,
         computeTTS
       }),
     });
@@ -313,12 +328,13 @@ export async function translateText({ text, audioContent, sourceLang = 'en', tar
           original: data.sourceText || data.original_text || cleanText,
           translated: translatedOutput,
           ttsAudio: data.ttsAudio || null,
-          hindi: targetLang === 'hi' ? translatedOutput : (data.sourceText || cleanText),
-          english: targetLang === 'en' ? translatedOutput : (data.sourceText || cleanText),
+          hindi: resolvedTarget === 'hi' ? translatedOutput : (data.sourceText || cleanText),
+          english: resolvedTarget === 'en' ? translatedOutput : (data.sourceText || cleanText),
           transliteration: data.transliteration || generateTransliteration(translatedOutput),
           phonetic: data.phonetic_guide || generatePhoneticGuide(translatedOutput),
           sourceLang,
-          targetLang,
+          targetLang: resolvedTarget,
+          targetLanguage: resolvedTarget,
           source: data.source || data.engine || 'Bhashini Translator',
           isLive: Boolean(data.is_live ?? true),
           confidence: 0.98,
@@ -340,13 +356,14 @@ export async function translateText({ text, audioContent, sourceLang = 'en', tar
   if (preloadedMatch) {
     return {
       original: cleanText,
-      translated: targetLang === 'hi' ? preloadedMatch.hindi : preloadedMatch.english,
+      translated: resolvedTarget === 'hi' ? preloadedMatch.hindi : preloadedMatch.english,
       hindi: preloadedMatch.hindi,
       english: preloadedMatch.english,
       transliteration: preloadedMatch.transliteration,
       phonetic: preloadedMatch.phonetic,
       sourceLang,
-      targetLang,
+      targetLang: resolvedTarget,
+      targetLanguage: resolvedTarget,
       source: 'Digital India Bhashini AI (Contextual Match)',
       isLive: false,
       confidence: 0.99,
@@ -359,13 +376,14 @@ export async function translateText({ text, audioContent, sourceLang = 'en', tar
     if (rule.keywords.some((kw) => lower.includes(kw))) {
       return {
         original: cleanText,
-        translated: targetLang === 'hi' ? rule.hindi : rule.english,
+        translated: resolvedTarget === 'hi' ? rule.hindi : rule.english,
         hindi: rule.hindi,
         english: rule.english,
         transliteration: rule.transliteration,
         phonetic: rule.phonetic,
         sourceLang,
-        targetLang,
+        targetLang: resolvedTarget,
+        targetLanguage: resolvedTarget,
         source: 'Digital India Bhashini AI (Grounded Fallback)',
         isLive: false,
         confidence: 0.95,
@@ -374,19 +392,21 @@ export async function translateText({ text, audioContent, sourceLang = 'en', tar
     }
   }
 
-  const fallbackHindi = targetLang === 'hi'
+  const targetLangMeta = MAJOR_INDIAN_LANGUAGES.find(l => l.code === resolvedTarget) || BHASHINI_LANGUAGES.find(l => l.code === resolvedTarget);
+  const fallbackVernacular = resolvedTarget === 'hi'
     ? `कृपया सुनिए: "${cleanText}" (भाषिणी अनुवाद)`
-    : `Translation: "${cleanText}"`;
+    : `${targetLangMeta ? targetLangMeta.name : resolvedTarget}: "${cleanText}"`;
 
   return {
     original: cleanText,
-    translated: fallbackHindi,
-    hindi: fallbackHindi,
+    translated: fallbackVernacular,
+    hindi: fallbackVernacular,
     english: cleanText,
-    transliteration: `Kripya suniye: "${cleanText}"`,
-    phonetic: `Krip-ya soo-nee-yay: ${cleanText}`,
+    transliteration: `Translation: "${cleanText}"`,
+    phonetic: `Spoken in ${targetLangMeta ? targetLangMeta.name : resolvedTarget}`,
     sourceLang,
-    targetLang,
+    targetLang: resolvedTarget,
+    targetLanguage: resolvedTarget,
     source: 'Digital India Bhashini AI Engine',
     isLive: false,
     confidence: 0.92,
@@ -398,7 +418,8 @@ export async function translateText({ text, audioContent, sourceLang = 'en', tar
  * Speech-to-Speech audio recorder pipeline
  * Takes an audio Blob recorded by MediaRecorder, encodes to Base64, and translates.
  */
-export async function speechToSpeechAudio({ audioBlob, sourceLang, targetLang }) {
+export async function speechToSpeechAudio({ audioBlob, sourceLang, targetLanguage, targetLang }) {
+  const resolvedTarget = targetLanguage || targetLang || 'hi';
   const base64Audio = await new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onloadend = () => resolve(reader.result.split(',')[1]);
@@ -409,14 +430,15 @@ export async function speechToSpeechAudio({ audioBlob, sourceLang, targetLang })
   const translationResult = await translateText({ 
     audioContent: base64Audio, 
     sourceLang, 
-    targetLang,
+    targetLanguage: resolvedTarget,
+    targetLang: resolvedTarget,
     computeTTS: true
   });
 
   if (translationResult.ttsAudio) {
-    playBase64Audio(translationResult.ttsAudio, translationResult.translated, targetLang);
+    playBase64Audio(translationResult.ttsAudio, translationResult.translated, resolvedTarget);
   } else {
-    playAudioSpeech(translationResult.translated, targetLang);
+    playAudioSpeech(translationResult.translated, resolvedTarget);
   }
 
   return {
@@ -488,13 +510,14 @@ export function playBase64Audio(base64Data, fallbackText = '', lang = 'hi', onEn
 /**
  * Speech-to-Speech translation workflow:
  */
-export async function speechToSpeech({ text, sourceLang = 'en', targetLang = 'hi' }) {
-  const translationResult = await translateText({ text, sourceLang, targetLang, computeTTS: true });
+export async function speechToSpeech({ text, sourceLang = 'en', targetLanguage, targetLang = 'hi' }) {
+  const resolvedTarget = targetLanguage || targetLang || 'hi';
+  const translationResult = await translateText({ text, sourceLang, targetLanguage: resolvedTarget, targetLang: resolvedTarget, computeTTS: true });
 
   if (translationResult.ttsAudio) {
-    playBase64Audio(translationResult.ttsAudio, translationResult.translated, targetLang);
+    playBase64Audio(translationResult.ttsAudio, translationResult.translated, resolvedTarget);
   } else {
-    playAudioSpeech(translationResult.translated, targetLang);
+    playAudioSpeech(translationResult.translated, resolvedTarget);
   }
 
   return {

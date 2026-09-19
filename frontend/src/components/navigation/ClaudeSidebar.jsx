@@ -103,17 +103,17 @@ export default function ClaudeSidebar({ onOpenQR }) {
         aria-label="Sidebar Navigation"
       >
         {/* Top Header & Brand */}
-        <div className="p-4 border-b border-white/10 flex items-center justify-between">
+        <div className="p-4 border-b border-white/10 flex items-center justify-between min-w-0 gap-2">
           <NavLink
             to="/"
             onClick={closeMobile}
-            className="flex items-center space-x-2.5 overflow-hidden group"
+            className="flex items-center space-x-2.5 overflow-hidden group min-w-0 flex-1"
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-indigo-600 flex items-center justify-center shrink-0 p-1.5 shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
               <Shield className="w-5 h-5 text-white" />
             </div>
             {(!isCollapsed || isMobileOpen) && (
-              <div className="whitespace-nowrap overflow-hidden">
+              <div className="whitespace-nowrap overflow-hidden text-ellipsis min-w-0">
                 <span className="text-sm font-black font-display tracking-tight text-white">
                   TRAVEL<span className="text-emerald-400">MATE</span>
                 </span>
@@ -127,7 +127,7 @@ export default function ClaudeSidebar({ onOpenQR }) {
           {/* Desktop Collapse Toggle Arrow */}
           <button
             onClick={toggleCollapse}
-            className="hidden lg:flex items-center justify-center w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white transition-colors"
+            className="hidden lg:flex items-center justify-center w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white transition-colors shrink-0 ml-auto"
             title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             aria-label={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
           >

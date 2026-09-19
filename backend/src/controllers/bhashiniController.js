@@ -30,6 +30,7 @@ const MULTILINGUAL_DICTIONARY = {
     kn: 'ದಯವಿಟ್ಟು ಮೀಟರ್ ಹಾಕಿ.',
     ml: 'ദയവായി മീറ്റർ ഇടുക.',
     pa: 'ਕਿਰਪਾ ਕਰਕੇ ਮੀਟਰ ਚਲਾਓ।',
+    or: 'ଦୟାକରି ମିଟର ଚଲାନ୍ତୁ।',
     translit: 'Bhaiya, kripya meter se chaliye.',
     phonetic: 'Bhai-ya, krip-ya mee-tur say chuh-lee-ye'
   },
@@ -44,6 +45,7 @@ const MULTILINGUAL_DICTIONARY = {
     kn: 'ಹತ್ತಿರದ ಮೆಟ್ರೋ ನಿಲ್ದಾಣ ಎಲ್ಲಿದೆ?',
     ml: 'ഏറ്റവും അടുത്തുള്ള മെട്രോ സ്റ്റേഷൻ എവിടെയാണ്?',
     pa: 'ਸਭ ਤੋਂ ਨੇੜੇ ਦਾ ਮੈਟਰੋ ਸਟੇਸ਼ਨ ਕਿੱਥੇ ਹੈ?',
+    or: 'ନିକଟତମ ମେଟ୍ରୋ ଷ୍ଟେସନ କେଉଁଠାରେ ଅଛି?',
     translit: 'Nikat-tam metro station kahan hai?',
     phonetic: 'Nik-ut-tum may-tro stay-shun kuh-haan hai?'
   },
@@ -58,6 +60,7 @@ const MULTILINGUAL_DICTIONARY = {
     kn: 'ನನಗೆ ಸಹಾಯ ಬೇಕು, ದಯವಿಟ್ಟು ಪೊಲೀಸರನ್ನು ಕರೆಯಿರಿ ಅಥವಾ 112 ಡಯಲ್ ಮಾಡಿ.',
     ml: 'എനിക്ക് സഹായം വേണം, ദയവായി പോലീസിനെ വിളിക്കുക അല്ലെങ്കിൽ 112 ഡയൽ ചെയ്യുക.',
     pa: 'ਮੈਨੂੰ ਮਦਦ ਚਾਹੀਦੀ ਹੈ, ਕਿਰਪਾ ਕਰਕੇ ਪੁਲਿਸ ਨੂੰ ਬੁਲਾਓ ਜਾਂ 112 ਡਾਇਲ ਕਰੋ।',
+    or: 'ମୋତେ ସାହାଯ୍ୟ ଦରକାର, ଦୟାକରି ପୋଲିସକୁ ଡାକନ୍ତୁ ବା 112 ଡାଏଲ କରନ୍ତୁ।',
     translit: 'Mujhe sahayata chahiye, kripya 112 dial kijiye.',
     phonetic: 'Moo-jhay suh-haa-yuh-tuh chaa-hi-ye, krip-ya 112 dial kee-jee-ye'
   },
@@ -72,6 +75,7 @@ const MULTILINGUAL_DICTIONARY = {
     kn: 'ದರ ಎಷ್ಟು? ಅಧಿಕೃತ ದರ ಎಷ್ಟು?',
     ml: 'നിരക്ക് എത്രയാണ്? ഔദ്യോഗിക നിരക്ക് എന്താണ്?',
     pa: 'ਕਿਰਾਇਆ ਕਿੰਨਾ ਹੈ? ਸਰਕਾਰੀ ਦਰ ਕੀ ਹੈ?',
+    or: 'ଭଡ଼ା କେତେ? ସରକାରୀ ଦର କ’ଣ?',
     translit: 'Kiraya kitna hai? Sarkari dar kya hai?',
     phonetic: 'Ki-raa-yaa kit-naa hai? Sur-kaa-ree dur kyuh hai?'
   },
@@ -86,6 +90,7 @@ const MULTILINGUAL_DICTIONARY = {
     kn: 'ದಯವಿಟ್ಟು ಇಲ್ಲಿ ನಿಲ್ಲಿಸಿ, ನಾನು ಇಲ್ಲಿ ಇಳಿಯಬೇಕು.',
     ml: 'ദയവായി ഇവിടെ നിർത്തുക, എനിക്ക് ഇവിടെ ഇറങ്ങണം.',
     pa: 'ਕਿਰਪਾ ਕਰਕੇ ਇੱਥੇ ਰੋਕੋ, ਮੈਂ ਇੱਥੇ ਉਤਰਨਾ ਚਾਹੁੰਦਾ ਹਾਂ।',
+    or: 'ଦୟାକରି ଏଠାରେ ରଖନ୍ତୁ, ମୁଁ ଏଠାରେ ଓହ୍ଲାଇବାକୁ ଚାହେଁ।',
     translit: 'Kripya yahan rok dijiye, mujhe yahan utarna hai.',
     phonetic: 'Krip-ya yuh-haan rok dee-jee-ye'
   }
@@ -305,8 +310,8 @@ exports.translate = async (req, res, next) => {
     const {
       text,
       audioContent,
-      source_lang = req.body?.sourceLang || 'en',
-      target_lang = req.body?.targetLang || 'hi',
+      source_lang = req.body?.sourceLanguage || req.body?.sourceLang || 'en',
+      target_lang = req.body?.targetLanguage || req.body?.targetLang || req.body?.target_lang || 'hi',
       computeTTS = req.body?.compute_tts || false
     } = req.body;
 
@@ -391,7 +396,10 @@ exports.translate = async (req, res, next) => {
               translated_text: targetTranslation,
               translatedText: targetTranslation,
               source_lang,
+              sourceLang: source_lang,
               target_lang,
+              targetLang: target_lang,
+              targetLanguage: target_lang,
               ttsAudio: ttsAudioBase64,
               transliteration: targetTranslation,
               phonetic_guide: 'Listen to native voice tones for pronunciation',
@@ -411,7 +419,51 @@ exports.translate = async (req, res, next) => {
       bhashiniError = 'Bhashini credentials not configured in backend environment.';
     }
 
-    // 2. FALLBACK ENGINE: GEMINI MULTIMODAL TRANSLATION
+    const srcLangName = LANGUAGE_NAMES[source_lang] || source_lang;
+    const tgtLangName = LANGUAGE_NAMES[target_lang] || target_lang;
+
+    // 2. CONTEXTUAL MULTILINGUAL DICTIONARY MATCH (Instant Vernacular Fallback)
+    const lower = cleanText.toLowerCase();
+    let matchedKey = null;
+    if (lower.includes('meter') || lower.includes('auto') || lower.includes('fare')) matchedKey = 'meter';
+    else if (lower.includes('metro')) matchedKey = 'metro';
+    else if (lower.includes('help') || lower.includes('police') || lower.includes('112')) matchedKey = 'help';
+    else if (lower.includes('how much') || lower.includes('rate')) matchedKey = 'fare';
+    else if (lower.includes('stop') || lower.includes('here')) matchedKey = 'stop';
+
+    if (matchedKey && MULTILINGUAL_DICTIONARY[matchedKey]) {
+      const translatedOutput = MULTILINGUAL_DICTIONARY[matchedKey][target_lang] || MULTILINGUAL_DICTIONARY[matchedKey]['hi'] || cleanText;
+      let ttsAudioBase64 = null;
+      if (computeTTS && translatedOutput) {
+        try {
+          ttsAudioBase64 = await generateTTSAudio(translatedOutput, target_lang);
+        } catch (e) {
+          console.warn('[Bhashini TTS] Auto generation notice:', e.message);
+        }
+      }
+      return res.json({
+        success: true,
+        source: 'Digital India Bhashini (Vernacular Offline Match)',
+        engine: 'Bhashini Translator',
+        is_live: false,
+        fallback_used: true,
+        original_text: cleanText,
+        sourceText: cleanText,
+        translated_text: translatedOutput,
+        translatedText: translatedOutput,
+        source_lang,
+        sourceLang: source_lang,
+        target_lang,
+        targetLang: target_lang,
+        targetLanguage: target_lang,
+        ttsAudio: ttsAudioBase64,
+        transliteration: MULTILINGUAL_DICTIONARY[matchedKey]?.translit || translatedOutput,
+        phonetic_guide: MULTILINGUAL_DICTIONARY[matchedKey]?.phonetic || `Pronounced in ${tgtLangName}`,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // 3. FALLBACK ENGINE: GEMINI MULTIMODAL TRANSLATION
     // Engaged ONLY when Bhashini is unconfigured or fails
     console.log('[Bhashini Controller] Engaging Gemini fallback translation...');
 
@@ -424,8 +476,6 @@ exports.translate = async (req, res, next) => {
     }
 
     let transcription = cleanText;
-    const srcLangName = LANGUAGE_NAMES[source_lang] || source_lang;
-    const tgtLangName = LANGUAGE_NAMES[target_lang] || target_lang;
 
     // Audio Speech-to-Text Transcription if audioContent is supplied
     if (audioContent) {
@@ -500,7 +550,10 @@ Output ONLY the clean, translated text in ${tgtLangName}. Do not add explanation
       translated_text: translatedOutput,
       translatedText: translatedOutput,
       source_lang,
+      sourceLang: source_lang,
       target_lang,
+      targetLang: target_lang,
+      targetLanguage: target_lang,
       ttsAudio: ttsAudioBase64,
       transliteration: translatedOutput,
       phonetic_guide: `Pronounced in ${tgtLangName}`,
