@@ -258,13 +258,13 @@ export default function GoogleMapView({
     let pickupMarker = null;
     let destMarker = null;
 
-    const originLat = origin?.lat || 28.6429;
-    const originLng = origin?.lng || 77.2195;
-    const destLat = destination?.lat || 28.6562;
-    const destLng = destination?.lng || 77.2410;
+    const originLat = Number(origin?.lat || 28.6429);
+    const originLng = Number(origin?.lng || 77.2195);
+    const destLat = Number(destination?.lat || 28.6562);
+    const destLng = Number(destination?.lng || 77.2410);
 
-    const originLatLng = new googleMapsApi.maps.LatLng(originLat, originLng);
-    const destLatLng = new googleMapsApi.maps.LatLng(destLat, destLng);
+    const originLatLng = new googleMapsApi.maps.LatLng(Number(originLat), Number(originLng));
+    const destLatLng = new googleMapsApi.maps.LatLng(Number(destLat), Number(destLng));
 
     // Dedicated Pickup Location Marker (Blue)
     pickupMarker = new googleMapsApi.maps.Marker({

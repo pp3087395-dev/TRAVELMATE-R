@@ -14,6 +14,7 @@ import ToastContainer from './components/common/ToastContainer';
 import HelplineFloatingBadge from './components/common/HelplineFloatingBadge';
 import QRModal from './components/common/QRModal';
 import ClaudeChatbotModal from './components/chat/ClaudeChatbotModal';
+import TMChatbotModal from './components/chat/TMChatbotModal';
 import LanguageSupportModal from './components/common/LanguageSupportModal';
 
 // Pages
@@ -29,13 +30,15 @@ import EvidenceVaultPage from './pages/EvidenceVaultPage';
 import IncidentReportPage from './pages/IncidentReportPage';
 import TripPlannerPage from './pages/TripPlannerPage';
 import PhraseHelperPage from './pages/PhraseHelperPage';
+import BhashiniTranslatorPage from './pages/BhashiniTranslatorPage';
 
-import { Bot } from 'lucide-react';
+import { Bot, Sparkles } from 'lucide-react';
 
 // Inner App Layout Container that dynamically adjusts to sidebar state
 function AppLayout() {
   const [isQROpen, setIsQROpen] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isClaudeChatOpen, setIsClaudeChatOpen] = useState(false);
+  const [isGeminiChatOpen, setIsGeminiChatOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const { isCollapsed } = useSidebar();
 
@@ -68,6 +71,7 @@ function AppLayout() {
             <Route path="/planner" element={<TripPlannerPage />} />
             <Route path="/trip-planner" element={<TripPlannerPage />} />
             <Route path="/phrase-helper" element={<PhraseHelperPage />} />
+            <Route path="/bhashini-translator" element={<BhashiniTranslatorPage />} />
             <Route path="/language" element={<PhraseHelperPage />} />
             <Route path="/fare-meter" element={<FareMeterPage />} />
             <Route path="/safe-journey" element={<SafeJourneyPage />} />
@@ -79,17 +83,29 @@ function AppLayout() {
         </main>
       </div>
 
-      {/* Floating Claude Chatbot Launcher Button */}
-      <div className="fixed bottom-4 left-4 z-30 md:bottom-6 md:left-6">
+      {/* Floating Chatbot Launchers (Claude & Gemini) */}
+      <div className="fixed bottom-4 left-4 z-30 md:bottom-6 md:left-6 flex items-center space-x-2">
         <button
           id="btn-floating-claude-chat"
-          onClick={() => setIsChatOpen(true)}
+          onClick={() => setIsClaudeChatOpen(true)}
           className="flex items-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-3.5 py-2.5 rounded-full shadow-xl shadow-indigo-600/30 border border-indigo-400/40 transition-all duration-200 hover:scale-105 active:scale-95"
           title="Ask Claude AI Grounded Assistant"
         >
           <Bot className="w-4 h-4" />
           <span className="text-xs font-semibold tracking-wide font-display hidden sm:inline">
-            Ask Claude AI
+            Claude AI
+          </span>
+        </button>
+
+        <button
+          id="btn-floating-gemini-chat"
+          onClick={() => setIsGeminiChatOpen(true)}
+          className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-500 hover:to-teal-500 text-white px-3.5 py-2.5 rounded-full shadow-xl shadow-teal-600/30 border border-teal-400/40 transition-all duration-200 hover:scale-105 active:scale-95"
+          title="Ask Gemini TM Chatbot"
+        >
+          <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+          <span className="text-xs font-semibold tracking-wide font-display hidden sm:inline">
+            Gemini AI
           </span>
         </button>
       </div>
@@ -105,7 +121,8 @@ function AppLayout() {
 
       {/* Modals */}
       <QRModal isOpen={isQROpen} onClose={() => setIsQROpen(false)} />
-      <ClaudeChatbotModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+      <ClaudeChatbotModal isOpen={isClaudeChatOpen} onClose={() => setIsClaudeChatOpen(false)} />
+      <TMChatbotModal isOpen={isGeminiChatOpen} onClose={() => setIsGeminiChatOpen(false)} />
       <LanguageSupportModal isOpen={isLangOpen} onClose={() => setIsLangOpen(false)} />
     </div>
   );

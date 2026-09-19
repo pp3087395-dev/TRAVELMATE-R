@@ -4,44 +4,73 @@
  * Digital India Bhashini (National Language Translation Mission - MeitY)
  * =============================================================================
  * 
- * This service provides both live Bhashini API integration and high-fidelity
- * mock translation fallbacks for Text Translation and Speech-to-Speech Translation.
- * 
- * PLUGGING IN REAL BHASHINI API CREDENTIALS:
- * 1. Register on the Bhashini portal (https://bhashini.gov.in / https://dhruva.bhashini.gov.in)
- * 2. Generate your ULCA User ID, API Key, and Pipeline Inference API Key.
- * 3. Set the following in frontend/.env:
- *    VITE_BHASHINI_USER_ID=your_user_id
- *    VITE_BHASHINI_API_KEY=your_api_key
- *    VITE_BHASHINI_INFERENCE_API_KEY=your_inference_api_key
- *    VITE_BHASHINI_PIPELINE_ENDPOINT=https://dhruva-api.bhashini.gov.in/services/inference/pipeline
- * 4. Once provided, this service will automatically toggle from Mock mode to Live Bhashini mode!
+ * Provides live Bhashini API integration via secure backend proxy,
+ * server-side Text-to-Speech audio streaming, and high-fidelity speech-to-speech.
+ * All Bhashini & AI translation calls route securely through backend APIs.
  */
 
 import { API_BASE } from './api';
 
+export const INTERNATIONAL_LANGUAGES = [
+  { code: 'en', name: 'English', native: 'English' },
+  { code: 'es', name: 'Spanish', native: 'Español' },
+  { code: 'fr', name: 'French', native: 'Français' },
+  { code: 'de', name: 'German', native: 'Deutsch' },
+  { code: 'it', name: 'Italian', native: 'Italiano' },
+  { code: 'pt', name: 'Portuguese', native: 'Português' },
+  { code: 'ru', name: 'Russian', native: 'Русский' },
+  { code: 'zh', name: 'Chinese (Mandarin)', native: '中文' },
+  { code: 'ja', name: 'Japanese', native: '日本語' },
+  { code: 'ko', name: 'Korean', native: '한국어' },
+  { code: 'ar', name: 'Arabic', native: 'العربية' },
+  { code: 'nl', name: 'Dutch', native: 'Nederlands' },
+  { code: 'tr', name: 'Turkish', native: 'Türkçe' },
+  { code: 'vi', name: 'Vietnamese', native: 'Tiếng Việt' },
+  { code: 'th', name: 'Thai', native: 'ไทย' },
+  { code: 'id', name: 'Indonesian', native: 'Bahasa Indonesia' },
+  { code: 'ms', name: 'Malay', native: 'Bahasa Melayu' },
+  { code: 'tl', name: 'Filipino (Tagalog)', native: 'Tagalog' },
+  { code: 'he', name: 'Hebrew', native: 'עברית' },
+  { code: 'pl', name: 'Polish', native: 'Polski' },
+  { code: 'sv', name: 'Swedish', native: 'Svenska' },
+  { code: 'el', name: 'Greek', native: 'Ελληνικά' },
+  { code: 'uk', name: 'Ukrainian', native: 'Українська' },
+  { code: 'cs', name: 'Czech', native: 'Čeština' },
+  { code: 'hu', name: 'Hungarian', native: 'Magyar' },
+  { code: 'ro', name: 'Romanian', native: 'Română' },
+  { code: 'da', name: 'Danish', native: 'Dansk' },
+  { code: 'fi', name: 'Finnish', native: 'Suomi' },
+  { code: 'no', name: 'Norwegian', native: 'Norsk' }
+];
+
 export const BHASHINI_LANGUAGES = [
   { code: 'hi', name: 'Hindi', native: 'हिन्दी', tts: true },
+  { code: 'bho', name: 'Bhojpuri', native: 'भोजपुरी', tts: true },
+  { code: 'as', name: 'Assamese', native: 'অসমীয়া', tts: true },
   { code: 'bn', name: 'Bengali', native: 'বাংলা', tts: true },
-  { code: 'ta', name: 'Tamil', native: 'தமிழ்', tts: true },
-  { code: 'te', name: 'Telugu', native: 'తెలుగు', tts: true },
-  { code: 'mr', name: 'Marathi', native: 'मराठी', tts: true },
+  { code: 'brx', name: 'Bodo', native: 'बर’', tts: true },
+  { code: 'doi', name: 'Dogri', native: 'डोगरी', tts: true },
   { code: 'gu', name: 'Gujarati', native: 'ગુજરાતી', tts: true },
   { code: 'kn', name: 'Kannada', native: 'ಕನ್ನಡ', tts: true },
+  { code: 'ks', name: 'Kashmiri', native: 'کٲشُر', tts: true },
+  { code: 'gom', name: 'Konkani', native: 'कोंकणी', tts: true },
+  { code: 'mai', name: 'Maithili', native: 'मैथिली', tts: true },
   { code: 'ml', name: 'Malayalam', native: 'മലയാളം', tts: true },
-  { code: 'pa', name: 'Punjabi', native: 'ਪੰਜਾਬੀ', tts: true },
+  { code: 'mni', name: 'Manipuri', native: 'ꯃꯤꯇꯩꯂꯣꯟ', tts: true },
+  { code: 'mr', name: 'Marathi', native: 'मराठी', tts: true },
+  { code: 'ne', name: 'Nepali', native: 'नेपाली', tts: true },
   { code: 'or', name: 'Odia', native: 'ଓଡ଼ିଆ', tts: true },
-  { code: 'as', name: 'Assamese', native: 'অসমীয়া', tts: true },
+  { code: 'pa', name: 'Punjabi', native: 'ਪੰਜਾਬੀ', tts: true },
+  { code: 'sa', name: 'Sanskrit', native: 'संस्कृतम्', tts: true },
+  { code: 'sat', name: 'Santali', native: 'ᱥᱟᱱᱛᱟᱲᱤ', tts: true },
+  { code: 'sd', name: 'Sindhi', native: 'سنڌي', tts: true },
+  { code: 'ta', name: 'Tamil', native: 'தமிழ்', tts: true },
+  { code: 'te', name: 'Telugu', native: 'తెలుగు', tts: true },
   { code: 'ur', name: 'Urdu', native: 'اردو', tts: true }
 ];
 
 export const BHASHINI_CONFIG = {
-  USER_ID: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BHASHINI_USER_ID) || '',
-  API_KEY: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BHASHINI_API_KEY) || '',
-  INFERENCE_API_KEY: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BHASHINI_INFERENCE_API_KEY) || '',
-  PIPELINE_ENDPOINT: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BHASHINI_PIPELINE_ENDPOINT) || 'https://dhruva-api.bhashini.gov.in/services/inference/pipeline',
-  PIPELINE_CONFIG_ENDPOINT: 'https://meity-auth.ulcacontrib.org/ulca/apis/v0/model/getModelsPipeline',
-  USE_MOCK: !(typeof import.meta !== 'undefined' && import.meta.env?.VITE_BHASHINI_API_KEY), // Automatically uses live API when API_KEY is set
+  USE_MOCK: false,
 };
 
 /**
@@ -153,7 +182,6 @@ export const PRELOADED_TOURIST_PHRASES = [
 
 /**
  * Intelligent contextual translation dictionary for offline/mock fallback.
- * Maps common phrases, keywords, and patterns between English and Hindi.
  */
 const CONTEXTUAL_RULES = [
   {
@@ -242,128 +270,69 @@ const CONTEXTUAL_RULES = [
   },
 ];
 
+let activeAudioInstance = null;
+
 /**
- * Text Translation using Bhashini ULCA Pipeline or Intelligent Mock Fallback.
+ * Text Translation using secure backend proxy with Gemini AI fallback.
  * 
  * @param {Object} params
- * @param {string} params.text - The input sentence or paragraph
- * @param {string} [params.sourceLang='en'] - 'en' | 'hi' | 'bn' | 'ta' etc.
- * @param {string} [params.targetLang='hi'] - 'hi' | 'en'
+ * @param {string} [params.text] - The input sentence or paragraph
+ * @param {string} [params.audioContent] - Base64 recorded audio for speech recognition
+ * @param {string} [params.sourceLang='en'] - Source language code
+ * @param {string} [params.targetLang='hi'] - Target language code
+ * @param {boolean} [params.computeTTS=false] - Whether to synthesize server TTS audio
  * @returns {Promise<Object>} Standardized translation result
  */
-export async function translateText({ text, sourceLang = 'en', targetLang = 'hi' }) {
-  if (!text || !text.trim()) {
-    throw new Error('Input text is required for translation.');
+export async function translateText({ text, audioContent, sourceLang = 'en', targetLang = 'hi', computeTTS = false }) {
+  if (!text?.trim() && !audioContent) {
+    throw new Error('Input text or audio is required for translation.');
   }
 
-  const cleanText = text.trim();
+  const cleanText = text ? text.trim() : '';
 
-  // ---------------------------------------------------------------------------
-  // 0. BACKEND BHASHINI PROXY ENDPOINT
-  // Communicates with backend /api/bhashini/translate for server-managed credentials
-  // ---------------------------------------------------------------------------
   try {
-    const backendRes = await fetch(`${API_BASE}/bhashini/translate`, {
+    const response = await fetch(`${API_BASE}/translate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         text: cleanText,
+        audioContent,
+        sourceLang,
         source_lang: sourceLang,
-        target_lang: targetLang
-      })
+        targetLang,
+        target_lang: targetLang,
+        computeTTS
+      }),
     });
-    if (backendRes.ok) {
-      const backendData = await backendRes.json();
-      if (backendData.success && backendData.translated_text) {
+
+    if (response.ok) {
+      const data = await response.json();
+      const translatedOutput = data.translatedText || data.translated_text || '';
+      if (translatedOutput) {
         return {
-          original: cleanText,
-          translated: backendData.translated_text,
-          hindi: targetLang === 'hi' ? backendData.translated_text : cleanText,
-          english: targetLang === 'en' ? backendData.translated_text : cleanText,
-          transliteration: backendData.transliteration || generateTransliteration(backendData.translated_text),
-          phonetic: backendData.phonetic_guide || generatePhoneticGuide(backendData.translated_text),
+          original: data.sourceText || data.original_text || cleanText,
+          translated: translatedOutput,
+          ttsAudio: data.ttsAudio || null,
+          hindi: targetLang === 'hi' ? translatedOutput : (data.sourceText || cleanText),
+          english: targetLang === 'en' ? translatedOutput : (data.sourceText || cleanText),
+          transliteration: data.transliteration || generateTransliteration(translatedOutput),
+          phonetic: data.phonetic_guide || generatePhoneticGuide(translatedOutput),
           sourceLang,
           targetLang,
-          source: backendData.source || 'Digital India Bhashini AI Engine',
-          isLive: Boolean(backendData.is_live),
+          source: data.source || data.engine || 'Bhashini Translator',
+          isLive: Boolean(data.is_live ?? true),
           confidence: 0.98,
-          timestamp: backendData.timestamp || new Date().toISOString()
+          timestamp: data.timestamp || new Date().toISOString(),
         };
       }
     }
   } catch (err) {
-    // Graceful fallback to client-side pipeline
+    console.warn('[Bhashini Service] Backend proxy translation error, using contextual fallback:', err.message);
   }
 
   // ---------------------------------------------------------------------------
-  // 1. DIRECT CLIENT-SIDE BHASHINI API INTEGRATION PIPELINE
-  // When API_KEY is provided in frontend .env, this direct block is executed.
+  // Contextual fallback for offline or network disruption
   // ---------------------------------------------------------------------------
-  if (!BHASHINI_CONFIG.USE_MOCK && BHASHINI_CONFIG.API_KEY) {
-    try {
-      const response = await fetch(BHASHINI_CONFIG.PIPELINE_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': BHASHINI_CONFIG.API_KEY,
-          'ulcaApiKey': BHASHINI_CONFIG.INFERENCE_API_KEY || BHASHINI_CONFIG.API_KEY,
-          'userID': BHASHINI_CONFIG.USER_ID,
-        },
-        body: JSON.stringify({
-          pipelineTasks: [
-            {
-              taskType: 'translation',
-              config: {
-                language: {
-                  sourceLanguage: sourceLang,
-                  targetLanguage: targetLang,
-                },
-              },
-            },
-          ],
-          inputData: {
-            input: [
-              {
-                source: cleanText,
-              },
-            ],
-          },
-        }),
-      });
-
-      if (response.ok) {
-        const liveData = await response.json();
-        const translatedOutput = liveData?.pipelineResponse?.[0]?.output?.[0]?.target || '';
-        if (translatedOutput) {
-          return {
-            original: cleanText,
-            translated: translatedOutput,
-            hindi: targetLang === 'hi' ? translatedOutput : cleanText,
-            english: targetLang === 'en' ? translatedOutput : cleanText,
-            transliteration: generateTransliteration(translatedOutput),
-            phonetic: generatePhoneticGuide(translatedOutput),
-            sourceLang,
-            targetLang,
-            source: 'Bhashini Live Inference API (MeitY)',
-            isLive: true,
-            confidence: 0.98,
-            timestamp: new Date().toISOString(),
-          };
-        }
-      }
-      console.warn('[Bhashini] Live API responded with status', response.status, 'Falling back to contextual engine.');
-    } catch (apiErr) {
-      console.warn('[Bhashini] Live API call failed, using high-fidelity fallback:', apiErr.message);
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // 2. HIGH-FIDELITY CONTEXTUAL BHASHINI ENGINE FALLBACK
-  // Used when running offline, during dev, or when keys are pending setup.
-  // ---------------------------------------------------------------------------
-  await new Promise((resolve) => setTimeout(resolve, 350)); // Simulated realistic latency
-
-  // Check preloaded phrases first
   const preloadedMatch = PRELOADED_TOURIST_PHRASES.find(
     (p) => p.english.toLowerCase() === cleanText.toLowerCase() || p.hindi === cleanText
   );
@@ -385,7 +354,6 @@ export async function translateText({ text, sourceLang = 'en', targetLang = 'hi'
     };
   }
 
-  // Check contextual keyword rules
   const lower = cleanText.toLowerCase();
   for (const rule of CONTEXTUAL_RULES) {
     if (rule.keywords.some((kw) => lower.includes(kw))) {
@@ -406,21 +374,17 @@ export async function translateText({ text, sourceLang = 'en', targetLang = 'hi'
     }
   }
 
-  // Generative fallback for arbitrary tourist phrases
   const fallbackHindi = targetLang === 'hi'
-    ? `कृपया सुनिए: "${cleanText}" (सरकारी भाषा मिशन अनुवाद)`
+    ? `कृपया सुनिए: "${cleanText}" (भाषिणी अनुवाद)`
     : `Translation: "${cleanText}"`;
-  
-  const fallbackTranslit = `Kripya suniye: "${cleanText}"`;
-  const fallbackPhonetic = `Krip-ya soo-nee-yay: ${cleanText}`;
 
   return {
     original: cleanText,
     translated: fallbackHindi,
     hindi: fallbackHindi,
     english: cleanText,
-    transliteration: fallbackTranslit,
-    phonetic: fallbackPhonetic,
+    transliteration: `Kripya suniye: "${cleanText}"`,
+    phonetic: `Krip-ya soo-nee-yay: ${cleanText}`,
     sourceLang,
     targetLang,
     source: 'Digital India Bhashini AI Engine',
@@ -431,22 +395,29 @@ export async function translateText({ text, sourceLang = 'en', targetLang = 'hi'
 }
 
 /**
- * Speech-to-Speech translation workflow:
- * 1. Takes transcribed audio speech (or transcript from Web Speech API)
- * 2. Translates source -> target using Bhashini
- * 3. Plays back synthesized speech in target language via Web Speech API or Bhashini TTS
- * 
- * @param {Object} params
- * @param {string} params.text - Transcribed input text
- * @param {string} [params.sourceLang='en']
- * @param {string} [params.targetLang='hi']
- * @returns {Promise<Object>}
+ * Speech-to-Speech audio recorder pipeline
+ * Takes an audio Blob recorded by MediaRecorder, encodes to Base64, and translates.
  */
-export async function speechToSpeech({ text, sourceLang = 'en', targetLang = 'hi' }) {
-  const translationResult = await translateText({ text, sourceLang, targetLang });
+export async function speechToSpeechAudio({ audioBlob, sourceLang, targetLang }) {
+  const base64Audio = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(audioBlob);
+  });
 
-  // Browser Speech Synthesis playback for target speech
-  playAudioSpeech(translationResult.translated, targetLang);
+  const translationResult = await translateText({ 
+    audioContent: base64Audio, 
+    sourceLang, 
+    targetLang,
+    computeTTS: true
+  });
+
+  if (translationResult.ttsAudio) {
+    playBase64Audio(translationResult.ttsAudio, translationResult.translated, targetLang);
+  } else {
+    playAudioSpeech(translationResult.translated, targetLang);
+  }
 
   return {
     ...translationResult,
@@ -455,51 +426,304 @@ export async function speechToSpeech({ text, sourceLang = 'en', targetLang = 'hi
 }
 
 /**
- * Audio Speech Synthesis helper.
- * Uses native Web Speech API with tailored Indian English or Hindi accents.
- * 
- * @param {string} text - Text to speak
- * @param {string} [lang='hi'] - 'hi' | 'en'
+ * Plays back synthesized MP3 or WAV audio from base64 data, with fallback to Web Speech.
  */
-export function playAudioSpeech(text, lang = 'hi') {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-    console.warn('[Bhashini] Web SpeechSynthesis is not supported in this environment.');
+export function playBase64Audio(base64Data, fallbackText = '', lang = 'hi', onEnd = null) {
+  stopAudioSpeech();
+
+  if (!base64Data) {
+    if (fallbackText) {
+      return playAudioSpeech(fallbackText, lang, onEnd);
+    }
+    if (onEnd) onEnd();
     return;
   }
 
-  window.speechSynthesis.cancel(); // Stop any pending utterances
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
-  utterance.rate = 0.88; // Slightly slower for crisp clarity to non-native speakers
-  utterance.pitch = 1.0;
+  try {
+    let mime = 'audio/mp3';
+    if (typeof base64Data === 'string' && base64Data.startsWith('UklGR')) {
+      mime = 'audio/wav';
+    }
 
-  // Attempt to select an Indian voice if available in user's OS
-  const voices = window.speechSynthesis.getVoices();
-  const matchedVoice = voices.find(
-    (v) => (lang === 'hi' && v.lang.includes('hi')) || (lang === 'en' && (v.lang.includes('en-IN') || v.name.includes('India')))
-  );
-  if (matchedVoice) {
-    utterance.voice = matchedVoice;
+    const audio = new Audio(`data:${mime};base64,${base64Data}`);
+    activeAudioInstance = audio;
+
+    audio.onended = () => {
+      if (activeAudioInstance === audio) activeAudioInstance = null;
+      if (onEnd) onEnd();
+    };
+
+    audio.onerror = (e) => {
+      console.warn('Audio playback error, falling back to Web Speech:', e);
+      if (activeAudioInstance === audio) activeAudioInstance = null;
+      if (fallbackText) {
+        playAudioSpeech(fallbackText, lang, onEnd);
+      } else if (onEnd) {
+        onEnd();
+      }
+    };
+
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((e) => {
+        console.warn('Base64 audio play interrupted, falling back to Web Speech:', e);
+        if (activeAudioInstance === audio) activeAudioInstance = null;
+        if (fallbackText) {
+          playAudioSpeech(fallbackText, lang, onEnd);
+        } else if (onEnd) {
+          onEnd();
+        }
+      });
+    }
+  } catch (err) {
+    console.warn('Base64 audio setup failed, falling back:', err);
+    if (fallbackText) {
+      playAudioSpeech(fallbackText, lang, onEnd);
+    } else if (onEnd) {
+      onEnd();
+    }
+  }
+}
+
+/**
+ * Speech-to-Speech translation workflow:
+ */
+export async function speechToSpeech({ text, sourceLang = 'en', targetLang = 'hi' }) {
+  const translationResult = await translateText({ text, sourceLang, targetLang, computeTTS: true });
+
+  if (translationResult.ttsAudio) {
+    playBase64Audio(translationResult.ttsAudio, translationResult.translated, targetLang);
+  } else {
+    playAudioSpeech(translationResult.translated, targetLang);
   }
 
-  window.speechSynthesis.speak(utterance);
+  return {
+    ...translationResult,
+    audioPlayed: true,
+  };
+}
+
+/**
+ * Intelligent Script and Language Auto-Detector
+ */
+export function detectScriptLanguage(str) {
+  if (!str || !str.trim()) return 'en';
+  if (/[\u0900-\u097F]/.test(str)) return 'hi'; // Devanagari (Hindi, Bhojpuri, Sanskrit, Marathi, Nepali, Maithili)
+  if (/[\u0980-\u09FF]/.test(str)) return 'bn'; // Bengali, Assamese
+  if (/[\u0A00-\u0A7F]/.test(str)) return 'pa'; // Gurmukhi (Punjabi)
+  if (/[\u0A80-\u0AFF]/.test(str)) return 'gu'; // Gujarati
+  if (/[\u0B00-\u0B7F]/.test(str)) return 'or'; // Odia
+  if (/[\u0B80-\u0BFF]/.test(str)) return 'ta'; // Tamil
+  if (/[\u0C00-\u0C7F]/.test(str)) return 'te'; // Telugu
+  if (/[\u0C80-\u0CFF]/.test(str)) return 'kn'; // Kannada
+  if (/[\u0D00-\u0D7F]/.test(str)) return 'ml'; // Malayalam
+  if (/[\u0600-\u06FF]/.test(str)) return 'ar'; // Arabic / Urdu
+  if (/[\u0400-\u04FF]/.test(str)) return 'ru'; // Cyrillic (Russian, Ukrainian)
+  if (/[\u4E00-\u9FFF]/.test(str)) return 'zh'; // Chinese
+  if (/[\u3040-\u30FF]/.test(str)) return 'ja'; // Japanese
+  if (/[\uAC00-\uD7AF]/.test(str)) return 'ko'; // Korean
+  if (/[\u0E00-\u0E7F]/.test(str)) return 'th'; // Thai
+  if (/[\u0590-\u05FF]/.test(str)) return 'he'; // Hebrew
+  if (/[\u0370-\u03FF]/.test(str)) return 'el'; // Greek
+  return 'en';
+}
+
+/**
+ * Universal Audio Speech Helper.
+ * Prioritizes high-fidelity server TTS streaming via backend /api/tts endpoint,
+ * with graceful fallback to hardened Web Speech API.
+ * 
+ * @param {string} text - Text to speak
+ * @param {string} [lang='hi'] - Target language code
+ * @param {Function} [onEnd] - Callback when audio finishes playing
+ */
+export function playAudioSpeech(text, lang = 'hi', onEnd = null) {
+  if (!text || !text.trim()) {
+    if (onEnd) onEnd();
+    return;
+  }
+
+  stopAudioSpeech();
+
+  // Resolve 'auto' to authentic language based on Unicode script
+  const resolvedLang = (!lang || lang === 'auto')
+    ? detectScriptLanguage(text)
+    : lang;
+
+  // Tier 1: Stream natural voice via backend /api/tts endpoint
+  try {
+    const cleanText = text.replace(/[*#_~`"']/g, '').trim().slice(0, 350);
+    const streamUrl = `${API_BASE}/tts?stream=true&text=${encodeURIComponent(cleanText)}&lang=${encodeURIComponent(resolvedLang)}`;
+    const audio = new Audio(streamUrl);
+    activeAudioInstance = audio;
+
+    let didFallback = false;
+    const fallbackToSpeechSynthesis = () => {
+      if (didFallback) return;
+      didFallback = true;
+      if (activeAudioInstance === audio) activeAudioInstance = null;
+      speakWithWebSpeech(text, resolvedLang, onEnd);
+    };
+
+    audio.onended = () => {
+      if (activeAudioInstance === audio) activeAudioInstance = null;
+      if (onEnd) onEnd();
+    };
+
+    audio.onerror = () => {
+      fallbackToSpeechSynthesis();
+    };
+
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        fallbackToSpeechSynthesis();
+      });
+    }
+    return;
+  } catch (err) {
+    console.warn('[Bhashini] Audio stream initiation error, falling back to Web Speech:', err);
+  }
+
+  // Tier 2: Native Web Speech API
+  speakWithWebSpeech(text, resolvedLang, onEnd);
+}
+
+/**
+ * Hardened Web Speech API fallback with regional Indian voice mappings.
+ */
+function speakWithWebSpeech(text, lang = 'hi', onEnd = null) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+    console.warn('[Bhashini] Web SpeechSynthesis is not supported in this environment.');
+    if (onEnd) onEnd();
+    return;
+  }
+
+  try {
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
+    window.speechSynthesis.cancel();
+  } catch (e) {}
+
+  setTimeout(() => {
+    try {
+      const utterance = new SpeechSynthesisUtterance(text);
+
+      const regionalLangMap = {
+        // Indian Languages
+        hi: 'hi-IN',
+        bho: 'hi-IN',
+        mai: 'hi-IN',
+        sa: 'hi-IN',
+        en: 'en-IN',
+        bn: 'bn-IN',
+        as: 'bn-IN',
+        ta: 'ta-IN',
+        te: 'te-IN',
+        mr: 'mr-IN',
+        gu: 'gu-IN',
+        kn: 'kn-IN',
+        ml: 'ml-IN',
+        pa: 'pa-IN',
+        ur: 'ur-IN',
+        ne: 'ne-NP',
+        or: 'hi-IN',
+        brx: 'hi-IN',
+        doi: 'hi-IN',
+        gom: 'mr-IN',
+        ks: 'ur-IN',
+        mni: 'bn-IN',
+        sat: 'hi-IN',
+        sd: 'ur-IN',
+
+        // International Languages
+        es: 'es-ES',
+        fr: 'fr-FR',
+        de: 'de-DE',
+        it: 'it-IT',
+        pt: 'pt-PT',
+        ru: 'ru-RU',
+        zh: 'zh-CN',
+        ja: 'ja-JP',
+        ko: 'ko-KR',
+        ar: 'ar-SA',
+        nl: 'nl-NL',
+        tr: 'tr-TR',
+        vi: 'vi-VN',
+        th: 'th-TH',
+        id: 'id-ID',
+        ms: 'ms-MY',
+        tl: 'fil-PH',
+        he: 'he-IL',
+        pl: 'pl-PL',
+        sv: 'sv-SE',
+        el: 'el-GR',
+        uk: 'uk-UA',
+        cs: 'cs-CZ',
+        hu: 'hu-HU',
+        ro: 'ro-RO',
+        da: 'da-DK',
+        fi: 'fi-FI',
+        no: 'nb-NO'
+      };
+
+      utterance.lang = regionalLangMap[lang] || (lang === 'en' ? 'en-IN' : 'hi-IN');
+      utterance.rate = 0.9;
+      utterance.pitch = 1.0;
+
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        const langPrefix = utterance.lang.split('-')[0];
+        const matchedVoice = voices.find(
+          (v) => (v.lang && (v.lang === utterance.lang || v.lang.startsWith(langPrefix))) ||
+                 (lang === 'bho' && v.lang?.includes('hi')) ||
+                 (lang === 'en' && (v.lang?.includes('en-IN') || v.name?.toLowerCase().includes('india')))
+        );
+        if (matchedVoice) {
+          utterance.voice = matchedVoice;
+        }
+      }
+
+      utterance.onend = () => {
+        if (onEnd) onEnd();
+      };
+      utterance.onerror = (e) => {
+        console.warn('[Bhashini] Web Speech error:', e);
+        if (onEnd) onEnd();
+      };
+
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      console.warn('[Bhashini] Speech utterance dispatch failed:', err);
+      if (onEnd) onEnd();
+    }
+  }, 60);
 }
 
 /**
  * Stop any current speech playback.
  */
 export function stopAudioSpeech() {
+  if (activeAudioInstance) {
+    try {
+      activeAudioInstance.pause();
+      activeAudioInstance.currentTime = 0;
+    } catch (e) {}
+    activeAudioInstance = null;
+  }
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
+    try {
+      window.speechSynthesis.cancel();
+    } catch (e) {}
   }
 }
 
 /**
- * Helper to generate simple Romanized transliteration for Hindi text.
+ * Helper to generate Romanized transliteration for Hindi text.
  */
 function generateTransliteration(hindiText) {
   if (!hindiText) return '';
-  // Basic romanization hints if live API returns pure Devanagari
   return hindiText
     .replace(/नमस्ते/g, 'Namaste')
     .replace(/कृपया/g, 'Kripya')
@@ -514,5 +738,5 @@ function generateTransliteration(hindiText) {
  */
 function generatePhoneticGuide(hindiText) {
   if (!hindiText) return 'Pronounce slowly and clearly';
-  return 'Listen to audio for precise Devanagari tones';
+  return 'Listen to audio for precise regional tones';
 }
