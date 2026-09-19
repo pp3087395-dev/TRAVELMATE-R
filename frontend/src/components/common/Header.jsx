@@ -54,12 +54,9 @@ export default function Header({ onOpenQR, onOpenLang }) {
               <Shield className="w-5 h-5 sm:w-5.5 sm:h-5.5 text-white" />
             </div>
             <div className="min-w-0 flex flex-col justify-center">
-              <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <div className="flex items-center">
                 <span className="text-base sm:text-lg font-black tracking-tight font-display text-white truncate">
                   TRAVEL<span className="text-emerald-400">MATE</span>
-                </span>
-                <span className="px-1.5 py-0.5 text-[9px] sm:text-[10px] font-bold bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30 uppercase tracking-widest shrink-0">
-                  Delhi
                 </span>
               </div>
               <p className="text-[10px] text-slate-400 font-medium tracking-wide hidden md:block truncate">
