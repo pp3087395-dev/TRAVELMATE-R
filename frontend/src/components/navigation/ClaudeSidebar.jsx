@@ -1,8 +1,9 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useSidebar } from '../../context/SidebarContext';
 import { useTraveler } from '../../context/TravelerContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   Home,
   Navigation,
@@ -22,14 +23,23 @@ import {
   Sun,
   Moon,
   Plus,
-  QrCode
+  QrCode,
+  LogOut
 } from 'lucide-react';
 
 export default function ClaudeSidebar({ onOpenQR }) {
   const { isCollapsed, isMobileOpen, toggleCollapse, closeMobile } = useSidebar();
   const { traveler, journey } = useTraveler();
   const { isDark, toggleTheme } = useTheme();
+  const { logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    closeMobile();
+    navigate('/login');
+  };
 
   // Primary 6 Navigation Links (as explicitly requested)
   const primaryLinks = [
@@ -288,13 +298,24 @@ export default function ClaudeSidebar({ onOpenQR }) {
                 </div>
               </NavLink>
 
-              <button
-                onClick={toggleTheme}
-                title={isDark ? 'Switch to Light' : 'Switch to Dark'}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-amber-300 hover:bg-white/10 transition-colors shrink-0"
-              >
-                {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
-              </button>
+              <div className="flex items-center space-x-1 shrink-0">
+                <button
+                  onClick={toggleTheme}
+                  title={isDark ? 'Switch to Light' : 'Switch to Dark'}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-amber-300 hover:bg-white/10 transition-colors"
+                >
+                  {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
+                </button>
+                <button
+                  onClick={handleLogout}
+                  id="btn-sidebar-logout"
+                  title="Sign Out / Logout"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                  aria-label="Logout"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center space-y-2">
@@ -311,6 +332,15 @@ export default function ClaudeSidebar({ onOpenQR }) {
                 className="p-1.5 rounded-lg text-slate-400 hover:text-amber-300 hover:bg-white/10 transition-colors"
               >
                 {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
+              </button>
+              <button
+                onClick={handleLogout}
+                id="btn-sidebar-logout-collapsed"
+                title="Sign Out / Logout"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                aria-label="Logout"
+              >
+                <LogOut className="w-4 h-4" />
               </button>
             </div>
           )}

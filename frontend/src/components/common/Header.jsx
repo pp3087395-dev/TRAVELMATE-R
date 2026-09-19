@@ -6,18 +6,23 @@ import {
   AlertTriangle, 
   Sun, 
   Moon, 
-  Menu 
+  Menu,
+  LogIn,
+  LogOut
 } from 'lucide-react';
 import { useTraveler } from '../../context/TravelerContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSidebar } from '../../context/SidebarContext';
-import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
 import StatusBadge from './StatusBadge';
 
 export default function Header({ onOpenQR, onOpenLang }) {
   const { traveler, journey } = useTraveler();
   const { isDark, toggleTheme } = useTheme();
   const { toggleMobile, toggleCollapse } = useSidebar();
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleSidebarToggle = () => {
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
@@ -123,6 +128,31 @@ export default function Header({ onOpenQR, onOpenLang }) {
             <AlertTriangle className="w-3.5 h-3.5 text-red-400 animate-bounce shrink-0" />
             <span className="font-bold">SOS 112</span>
           </Link>
+
+          {/* User Auth Action (Sign In / Logout) */}
+          {isAuthenticated ? (
+            <button
+              id="btn-header-logout"
+              onClick={async () => {
+                await logout();
+                navigate('/login');
+              }}
+              title="Sign Out / Logout"
+              className="flex items-center space-x-1.5 h-9 sm:h-9.5 px-2.5 sm:px-3 rounded-xl bg-white/5 hover:bg-rose-500/10 border border-white/10 hover:border-rose-500/30 text-xs text-slate-300 hover:text-rose-300 transition-all focus:outline-none"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden md:inline font-semibold">Logout</span>
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              id="btn-header-login-link"
+              className="flex items-center space-x-1.5 h-9 sm:h-9.5 px-3 sm:px-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-xs font-bold transition-all hover:scale-105 active:scale-95 focus:outline-none shadow-md shadow-emerald-500/20"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Sign In</span>
+            </Link>
+          )}
         </div>
 
       </div>

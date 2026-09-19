@@ -16,6 +16,7 @@ const incidentRoutes = require('./routes/incidents');
 const adminRoutes = require('./routes/admin');
 const bhashiniRoutes = require('./routes/bhashini');
 const chatbotRoutes = require('./routes/chatbot');
+const authRoutes = require('./routes/auth');
 
 const app = express();
 
@@ -93,6 +94,7 @@ app.use('/api/incidents', incidentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/bhashini', bhashiniRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/auth', authRoutes);
 
 // Fallback aliases for frontend services requesting /api/translate or /api/tts directly
 app.use('/api/translate', (req, res, next) => {

@@ -641,6 +641,88 @@ export const api = {
       if (res.ok) return await res.json();
     } catch (_) {}
     return { success: false };
+  },
+
+  // 15. OTP-Based Authentication
+  async sendOtp(payload) {
+    try {
+      const res = await fetch(`${API_BASE}/auth/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return await res.json();
+    } catch (e) {
+      console.warn('[API Fallback] Local OTP Generator fallback:', e.message);
+      const mockOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      return {
+        success: true,
+        message: `Offline Demo Code sent to ${payload.identifier}`,
+        identifier: payload.identifier,
+        devOtp: mockOtp,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString()
+      };
+    }
+  },
+
+  async verifyOtp(payload) {
+    try {
+      const res = await fetch(`${API_BASE}/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return await res.json();
+    } catch (e) {
+      console.warn('[API Fallback] Local OTP Verification fallback:', e.message);
+      const isEmail = payload.identifier.includes('@');
+      const name = isEmail ? payload.identifier.split('@')[0] : 'Traveler';
+      const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
+      const code = `TM-DEL-2026-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      return {
+        success: true,
+        token: `tm_local_${Date.now()}`,
+        traveler: {
+          id: `trv-${Date.now()}`,
+          temp_id: `TRV-${code.slice(12)}`,
+          name: formattedName,
+          email: isEmail ? payload.identifier : '',
+          nationality: isEmail ? 'United Kingdom' : 'India',
+          preferred_language: 'en',
+          emergency_contact: payload.identifier
+        },
+        journey: {
+          journey_code: code,
+          status: 'active',
+          current_lat: 28.6139,
+          current_lng: 77.2090,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        }
+      };
+    }
+  },
+
+  async getMe(token) {
+    try {
+      const res = await fetch(`${API_BASE}/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      return await res.json();
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  },
+
+  async logout(token) {
+    try {
+      const res = await fetch(`${API_BASE}/auth/logout`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      return await res.json();
+    } catch (e) {
+      return { success: true, message: 'Logged out locally' };
+    }
   }
 };
 

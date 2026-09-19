@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTraveler } from '../context/TravelerContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import {
   Settings,
@@ -17,7 +19,8 @@ import {
   AlertTriangle,
   QrCode,
   Lock,
-  Save
+  Save,
+  LogOut
 } from 'lucide-react';
 
 const NATIONALITIES = [
@@ -42,6 +45,14 @@ export default function SettingsPage() {
   const { traveler, journey, updateProfile, concludeJourney } = useTraveler();
   const { isDark, toggleTheme } = useTheme();
   const { showToast } = useToast();
+  const { user, token, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    showToast('Signed out of TravelMate. Safe travels!', 'info');
+    navigate('/login');
+  };
 
   const [formData, setFormData] = useState({
     name: traveler?.name || 'Sarah Jenkins',
@@ -252,6 +263,43 @@ export default function SettingsPage() {
           >
             <Download className="w-4 h-4 text-indigo-400" />
             <span>Download Ledger Export (.json)</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Account Authentication & Active Session */}
+      <div className="glass-card p-6 sm:p-8 rounded-3xl border border-white/10 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-white/10">
+          <div className="flex items-center space-x-2.5 text-emerald-400">
+            <Lock className="w-5 h-5" />
+            <h2 className="text-lg font-bold font-display text-white">
+              Authenticated Session &amp; Security
+            </h2>
+          </div>
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            Active
+          </span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
+            <span className="text-slate-400 block text-[11px]">Signed In As</span>
+            <strong className="text-white text-sm font-semibold">{user?.name || traveler?.name || 'Traveler'}</strong>
+            <p className="text-slate-400 text-[11px] truncate">{user?.email || user?.emergency_contact || traveler?.emergency_contact || 'Verified User'}</p>
+          </div>
+          <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-1">
+            <span className="text-slate-400 block text-[11px]">SafeVisit Journey Pass</span>
+            <strong className="text-emerald-400 font-mono text-sm">{journey?.journey_code || 'TM-DEL-2026-X89K'}</strong>
+            <p className="text-slate-400 text-[11px]">Session token active</p>
+          </div>
+        </div>
+        <div className="pt-2">
+          <button
+            onClick={handleLogout}
+            id="btn-settings-logout"
+            className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-rose-500/15 border border-white/10 hover:border-rose-500/40 text-slate-300 hover:text-rose-300 font-bold text-xs flex items-center space-x-2 transition-all hover:scale-105 active:scale-95"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sign Out of Current Session</span>
           </button>
         </div>
       </div>

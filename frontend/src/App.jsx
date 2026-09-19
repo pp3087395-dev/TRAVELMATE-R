@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { TravelerProvider } from './context/TravelerContext';
+import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
 import { SidebarProvider, useSidebar } from './context/SidebarContext';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Navigation & Layout Components
 import Header from './components/common/Header';
@@ -18,6 +20,7 @@ import LanguageSupportModal from './components/common/LanguageSupportModal';
 
 // Pages
 import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
 import UserPortalPage from './pages/UserPortalPage';
 import JourneyChainPage from './pages/JourneyChainPage';
 import SettingsPage from './pages/SettingsPage';
@@ -42,6 +45,21 @@ function AppLayout() {
   const [isHelplineOpen, setIsHelplineOpen] = useState(false);
   const [bhashiniTargetLanguage, setBhashiniTargetLanguage] = useState('hi');
   const { isCollapsed } = useSidebar();
+  const location = useLocation();
+
+  // If on the dedicated /login route, render a clean, focused view without the outer shell
+  if (location.pathname === '/login') {
+    return (
+      <div className="min-h-screen bg-[#070b14] text-slate-100 flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
+        <main className="flex-1">
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+          </Routes>
+        </main>
+        <ToastContainer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-slate-100 flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
@@ -61,23 +79,27 @@ function AppLayout() {
         
         <main className="flex-1">
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
-            <Route path="/portal" element={<UserPortalPage />} />
-            <Route path="/journey-chain" element={<JourneyChainPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/onboarding" element={<OnboardingPage />} />
-            <Route path="/discover" element={<DiscoverPage />} />
-            <Route path="/planner" element={<TripPlannerPage />} />
-            <Route path="/trip-planner" element={<TripPlannerPage />} />
-            <Route path="/phrase-helper" element={<PhraseHelperPage />} />
-            <Route path="/bhashini-translator" element={<BhashiniTranslatorPage />} />
-            <Route path="/language" element={<PhraseHelperPage />} />
-            <Route path="/fare-meter" element={<FareMeterPage />} />
-            <Route path="/safe-journey" element={<SafeJourneyPage />} />
-            <Route path="/vault" element={<EvidenceVaultPage />} />
+            <Route path="/login" element={<LoginPage />} />
             <Route path="/incident" element={<IncidentReportPage />} />
             <Route path="/emergency" element={<IncidentReportPage />} />
-            <Route path="/admin" element={<UserPortalPage />} />
+
+            {/* Authenticated Protected Routes */}
+            <Route path="/portal" element={<ProtectedRoute><UserPortalPage /></ProtectedRoute>} />
+            <Route path="/journey-chain" element={<ProtectedRoute><JourneyChainPage /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+            <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
+            <Route path="/discover" element={<ProtectedRoute><DiscoverPage /></ProtectedRoute>} />
+            <Route path="/planner" element={<ProtectedRoute><TripPlannerPage /></ProtectedRoute>} />
+            <Route path="/trip-planner" element={<ProtectedRoute><TripPlannerPage /></ProtectedRoute>} />
+            <Route path="/phrase-helper" element={<ProtectedRoute><PhraseHelperPage /></ProtectedRoute>} />
+            <Route path="/bhashini-translator" element={<ProtectedRoute><BhashiniTranslatorPage /></ProtectedRoute>} />
+            <Route path="/language" element={<ProtectedRoute><PhraseHelperPage /></ProtectedRoute>} />
+            <Route path="/fare-meter" element={<ProtectedRoute><FareMeterPage /></ProtectedRoute>} />
+            <Route path="/safe-journey" element={<ProtectedRoute><SafeJourneyPage /></ProtectedRoute>} />
+            <Route path="/vault" element={<ProtectedRoute><EvidenceVaultPage /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><UserPortalPage /></ProtectedRoute>} />
           </Routes>
         </main>
       </div>
@@ -168,13 +190,15 @@ export default function App() {
   return (
     <ThemeProvider>
       <TravelerProvider>
-        <ToastProvider>
-          <SidebarProvider>
-            <BrowserRouter>
-              <AppLayout />
-            </BrowserRouter>
-          </SidebarProvider>
-        </ToastProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <SidebarProvider>
+              <BrowserRouter>
+                <AppLayout />
+              </BrowserRouter>
+            </SidebarProvider>
+          </ToastProvider>
+        </AuthProvider>
       </TravelerProvider>
     </ThemeProvider>
   );
